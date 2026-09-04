@@ -97,63 +97,77 @@ class _FinancialCommandCenterState extends State<FinancialCommandCenter> {
         // 1. DEMO MODE BADGE (If active)
         if (widget.isDemoMode) ...[
           Container(
-            padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
+            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
             decoration: BoxDecoration(
-              color: const Color(0xFF0F172A),
-              borderRadius: BorderRadius.circular(10),
-              border: Border.all(color: AppTheme.primaryLight.withValues(alpha: 0.4)),
+              gradient: AppTheme.heroGradient,
+              borderRadius: BorderRadius.circular(16),
+              border: Border.all(color: AppTheme.warningColor.withValues(alpha: 0.5)),
+              boxShadow: [
+                BoxShadow(
+                  color: AppTheme.warningColor.withValues(alpha: 0.15),
+                  blurRadius: 12,
+                ),
+              ],
             ),
-            child: const Row(
+            child: Row(
               children: [
-                Icon(Icons.science_outlined, color: AppTheme.primaryLight, size: 16),
-                SizedBox(width: 8),
-                Expanded(
+                Container(
+                  padding: const EdgeInsets.all(4),
+                  decoration: BoxDecoration(
+                    gradient: AppTheme.amberGradient,
+                    shape: BoxShape.circle,
+                  ),
+                  child: const Icon(Icons.science_rounded, color: Colors.white, size: 14),
+                ),
+                const SizedBox(width: 10),
+                const Expanded(
                   child: Text(
-                    'DEMO MODE • Pacific Coast Roasters (Sample Scenario)',
+                    'DEMO WORKSPACE • Pacific Coast Roasters (Sample Scenario)',
                     style: TextStyle(
                       color: Colors.white,
                       fontSize: 12,
-                      fontWeight: FontWeight.bold,
+                      fontWeight: FontWeight.w800,
+                      letterSpacing: 0.2,
                     ),
                   ),
                 ),
               ],
             ),
           ),
-          const SizedBox(height: 14),
+          const SizedBox(height: 16),
         ],
 
         // 2. FINANCIAL HEALTH HERO (10-second Answer: "How is my business doing?")
         if (breakdown != null) ...[
           HealthScoreCard(breakdown: breakdown),
-          const SizedBox(height: 16),
+          const SizedBox(height: 18),
         ],
 
         // 3. PROACTIVE CFO BRIEFING (10-second Answer: "What should I do?")
         if (widget.briefing != null) ...[
           _buildCfoBriefingCard(widget.briefing!),
-          const SizedBox(height: 16),
+          const SizedBox(height: 18),
         ],
 
         // 4. PRIMARY KPI GRID (10-second Answer: "What changed?")
         _buildKpiGrid(metric, currency),
-        const SizedBox(height: 16),
+        const SizedBox(height: 18),
 
         // 5. RISK & OPPORTUNITY SNAPSHOT (10-second Answer: "What is dangerous?")
         _buildRiskOpportunitySnapshot(),
-        const SizedBox(height: 16),
+        const SizedBox(height: 18),
 
         // 6. FORECAST SNAPSHOT (10-second Answer: "What is likely to happen next?")
         _buildForecastSnapshot(currency),
-        const SizedBox(height: 16),
+        const SizedBox(height: 18),
 
         // 7. FINANCIAL TREND VISUALIZATION (Actuals vs Forecast with 30d/3m/6m/12m)
         _buildTrendVisualizer(currency),
-        const SizedBox(height: 16),
+        const SizedBox(height: 18),
 
         // 8. WHAT-IF SCENARIO SIMULATOR LAUNCHER
         _buildWhatIfSimulatorLauncher(),
-        const SizedBox(height: 20),
+        const SizedBox(height: 22),
 
         // 9. RECENT FINANCIAL ACTIVITY
         _buildRecentActivitySection(currency),
@@ -166,18 +180,12 @@ class _FinancialCommandCenterState extends State<FinancialCommandCenter> {
   // ==========================================
   Widget _buildCfoBriefingCard(CfoBriefing briefing) {
     return Container(
-      padding: const EdgeInsets.all(18),
+      padding: const EdgeInsets.all(20),
       decoration: BoxDecoration(
         color: AppTheme.surface,
-        borderRadius: BorderRadius.circular(18),
-        border: Border.all(color: AppTheme.borderColor),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withValues(alpha: 0.03),
-            blurRadius: 10,
-            offset: const Offset(0, 3),
-          ),
-        ],
+        borderRadius: BorderRadius.circular(22),
+        border: Border.all(color: AppTheme.borderColor.withValues(alpha: 0.8)),
+        boxShadow: AppTheme.cardShadow,
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -188,79 +196,93 @@ class _FinancialCommandCenterState extends State<FinancialCommandCenter> {
               Row(
                 children: [
                   Container(
-                    padding: const EdgeInsets.all(6),
+                    width: 34,
+                    height: 34,
                     decoration: BoxDecoration(
-                      color: AppTheme.primaryNavy,
-                      borderRadius: BorderRadius.circular(8),
+                      gradient: AppTheme.primaryGradient,
+                      borderRadius: BorderRadius.circular(10),
+                      boxShadow: [
+                        BoxShadow(
+                          color: AppTheme.primaryLight.withValues(alpha: 0.25),
+                          blurRadius: 8,
+                        ),
+                      ],
                     ),
                     child: const Icon(
                       Icons.psychology_rounded,
-                      color: AppTheme.primaryLight,
-                      size: 16,
+                      color: Colors.white,
+                      size: 18,
                     ),
                   ),
-                  const SizedBox(width: 8),
+                  const SizedBox(width: 10),
                   const Text(
                     'AI CFO Daily Briefing',
                     style: TextStyle(
-                      fontSize: 14,
-                      fontWeight: FontWeight.bold,
+                      fontSize: 15,
+                      fontWeight: FontWeight.w800,
                       color: AppTheme.textPrimary,
+                      letterSpacing: -0.2,
                     ),
                   ),
                 ],
               ),
               InkWell(
                 onTap: widget.onNavigateToAiCfo,
-                borderRadius: BorderRadius.circular(6),
-                child: const Padding(
-                  padding: EdgeInsets.symmetric(horizontal: 6, vertical: 2),
-                  child: Row(
+                borderRadius: BorderRadius.circular(8),
+                child: Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                  decoration: BoxDecoration(
+                    color: AppTheme.primaryLight.withValues(alpha: 0.1),
+                    borderRadius: BorderRadius.circular(8),
+                  ),
+                  child: const Row(
                     children: [
                       Text(
-                        'Open Chat',
+                        'Open CFO Chat',
                         style: TextStyle(
-                          fontSize: 12,
-                          color: AppTheme.primaryNavy,
+                          fontSize: 11,
+                          color: AppTheme.primaryColor,
                           fontWeight: FontWeight.bold,
                         ),
                       ),
-                      SizedBox(width: 2),
-                      Icon(Icons.chevron_right, size: 15, color: AppTheme.primaryNavy),
+                      SizedBox(width: 3),
+                      Icon(Icons.arrow_forward_rounded, size: 12, color: AppTheme.primaryColor),
                     ],
                   ),
                 ),
               ),
             ],
           ),
-          const SizedBox(height: 12),
+          const SizedBox(height: 14),
           Text(
             briefing.todayStatus,
             style: const TextStyle(
               fontSize: 13,
               color: AppTheme.textPrimary,
-              height: 1.4,
+              height: 1.45,
+              fontWeight: FontWeight.w400,
             ),
           ),
-          const SizedBox(height: 10),
+          const SizedBox(height: 12),
           Container(
-            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+            padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
             decoration: BoxDecoration(
               color: AppTheme.surfaceElevated,
-              borderRadius: BorderRadius.circular(10),
+              borderRadius: BorderRadius.circular(14),
+              border: Border.all(color: AppTheme.borderColor.withValues(alpha: 0.7)),
             ),
             child: Row(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                const Icon(Icons.flash_on_rounded, color: AppTheme.warningColor, size: 15),
-                const SizedBox(width: 6),
+                const Icon(Icons.flash_on_rounded, color: AppTheme.warningColor, size: 16),
+                const SizedBox(width: 8),
                 Expanded(
                   child: Text(
                     'Key Shift: ${briefing.mostImportantChange}',
                     style: const TextStyle(
                       fontSize: 12,
                       color: AppTheme.textSecondary,
-                      fontWeight: FontWeight.w500,
+                      fontWeight: FontWeight.w600,
                     ),
                   ),
                 ),
@@ -271,30 +293,37 @@ class _FinancialCommandCenterState extends State<FinancialCommandCenter> {
             const SizedBox(height: 12),
             InkWell(
               onTap: () => widget.onExecuteAction(briefing.prioritizedIssues.first),
-              borderRadius: BorderRadius.circular(8),
+              borderRadius: BorderRadius.circular(14),
               child: Container(
-                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 9),
+                padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 11),
                 decoration: BoxDecoration(
-                  color: AppTheme.primaryLight.withValues(alpha: 0.12),
-                  borderRadius: BorderRadius.circular(8),
-                  border: Border.all(color: AppTheme.primaryLight.withValues(alpha: 0.3)),
+                  gradient: AppTheme.primaryGradient,
+                  borderRadius: BorderRadius.circular(14),
+                  boxShadow: [
+                    BoxShadow(
+                      color: AppTheme.primaryColor.withValues(alpha: 0.25),
+                      blurRadius: 10,
+                      offset: const Offset(0, 3),
+                    ),
+                  ],
                 ),
                 child: Row(
                   children: [
-                    const Icon(Icons.arrow_forward_rounded, color: AppTheme.primaryLight, size: 14),
+                    const Icon(Icons.bolt_rounded, color: Colors.white, size: 16),
                     const SizedBox(width: 8),
                     Expanded(
                       child: Text(
                         'Recommended: ${briefing.recommendedAction}',
                         style: const TextStyle(
                           fontSize: 12,
-                          fontWeight: FontWeight.bold,
-                          color: AppTheme.primaryNavy,
+                          fontWeight: FontWeight.w700,
+                          color: Colors.white,
                         ),
                         maxLines: 1,
                         overflow: TextOverflow.ellipsis,
                       ),
                     ),
+                    const Icon(Icons.arrow_forward_rounded, color: Colors.white, size: 14),
                   ],
                 ),
               ),
@@ -318,9 +347,9 @@ class _FinancialCommandCenterState extends State<FinancialCommandCenter> {
           crossAxisCount: crossAxisCount,
           shrinkWrap: true,
           physics: const NeverScrollableScrollPhysics(),
-          mainAxisSpacing: 12,
-          crossAxisSpacing: 12,
-          childAspectRatio: isTablet ? 1.5 : 1.2,
+          mainAxisSpacing: 14,
+          crossAxisSpacing: 14,
+          childAspectRatio: isTablet ? 1.5 : 1.25,
           children: [
             KpiMetricCard(
               title: 'Revenue',
@@ -373,11 +402,12 @@ class _FinancialCommandCenterState extends State<FinancialCommandCenter> {
     final topOpp = widget.activeAlerts.where((a) => a.isOpportunity && !a.isRead).toList();
 
     return Container(
-      padding: const EdgeInsets.all(16),
+      padding: const EdgeInsets.all(20),
       decoration: BoxDecoration(
         color: AppTheme.surface,
-        borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: AppTheme.borderColor),
+        borderRadius: BorderRadius.circular(22),
+        border: Border.all(color: AppTheme.borderColor.withValues(alpha: 0.8)),
+        boxShadow: AppTheme.cardShadow,
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -387,14 +417,15 @@ class _FinancialCommandCenterState extends State<FinancialCommandCenter> {
             children: [
               const Row(
                 children: [
-                  Icon(Icons.bolt_rounded, size: 18, color: AppTheme.warningColor),
-                  SizedBox(width: 6),
+                  Icon(Icons.bolt_rounded, size: 20, color: AppTheme.warningColor),
+                  SizedBox(width: 8),
                   Text(
                     'Signals & Action Triggers',
                     style: TextStyle(
                       fontSize: 15,
-                      fontWeight: FontWeight.bold,
+                      fontWeight: FontWeight.w800,
                       color: AppTheme.textPrimary,
+                      letterSpacing: -0.2,
                     ),
                   ),
                 ],
@@ -406,25 +437,26 @@ class _FinancialCommandCenterState extends State<FinancialCommandCenter> {
                   minimumSize: const Size(50, 30),
                   tapTargetSize: MaterialTapTargetSize.shrinkWrap,
                 ),
-                child: const Text('Action Center'),
+                child: const Text('Action Center', style: TextStyle(fontWeight: FontWeight.bold)),
               ),
             ],
           ),
-          const SizedBox(height: 12),
+          const SizedBox(height: 14),
           if (topRisk.isEmpty && topOpp.isEmpty) ...[
             Container(
-              padding: const EdgeInsets.all(12),
+              padding: const EdgeInsets.all(14),
               decoration: BoxDecoration(
                 color: AppTheme.surfaceElevated,
-                borderRadius: BorderRadius.circular(10),
+                borderRadius: BorderRadius.circular(14),
+                border: Border.all(color: AppTheme.borderColor.withValues(alpha: 0.7)),
               ),
               child: const Row(
                 children: [
-                  Icon(Icons.check_circle_outline, color: AppTheme.accentColor, size: 16),
-                  SizedBox(width: 8),
+                  Icon(Icons.check_circle_rounded, color: AppTheme.accentColor, size: 18),
+                  SizedBox(width: 10),
                   Text(
                     'All signals nominal. No critical bottlenecks active.',
-                    style: TextStyle(fontSize: 12, color: AppTheme.textSecondary),
+                    style: TextStyle(fontSize: 12, color: AppTheme.textSecondary, fontWeight: FontWeight.w500),
                   ),
                 ],
               ),
@@ -444,7 +476,7 @@ class _FinancialCommandCenterState extends State<FinancialCommandCenter> {
               ),
             ],
             if (topOpp.isNotEmpty) ...[
-              const SizedBox(height: 8),
+              const SizedBox(height: 10),
               _buildSignalTile(
                 alert: topOpp.first,
                 isRisk: false,
@@ -472,32 +504,33 @@ class _FinancialCommandCenterState extends State<FinancialCommandCenter> {
 
     return InkWell(
       onTap: onTap,
-      borderRadius: BorderRadius.circular(10),
+      borderRadius: BorderRadius.circular(14),
       child: Container(
-        padding: const EdgeInsets.all(12),
+        padding: const EdgeInsets.all(14),
         decoration: BoxDecoration(
           color: AppTheme.surfaceElevated,
-          borderRadius: BorderRadius.circular(10),
-          border: Border.all(color: color.withValues(alpha: 0.25)),
+          borderRadius: BorderRadius.circular(14),
+          border: Border.all(color: color.withValues(alpha: 0.3)),
         ),
         child: Row(
           children: [
             Container(
-              padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
               decoration: BoxDecoration(
                 color: color.withValues(alpha: 0.15),
-                borderRadius: BorderRadius.circular(4),
+                borderRadius: BorderRadius.circular(6),
               ),
               child: Text(
                 isRisk ? 'RISK' : 'OPPORTUNITY',
                 style: TextStyle(
                   color: color,
                   fontSize: 9,
-                  fontWeight: FontWeight.bold,
+                  fontWeight: FontWeight.w800,
+                  letterSpacing: 0.5,
                 ),
               ),
             ),
-            const SizedBox(width: 10),
+            const SizedBox(width: 12),
             Expanded(
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
@@ -506,12 +539,13 @@ class _FinancialCommandCenterState extends State<FinancialCommandCenter> {
                     alert.title,
                     style: const TextStyle(
                       fontSize: 13,
-                      fontWeight: FontWeight.w600,
+                      fontWeight: FontWeight.w700,
                       color: AppTheme.textPrimary,
                     ),
                     maxLines: 1,
                     overflow: TextOverflow.ellipsis,
                   ),
+                  const SizedBox(height: 2),
                   Text(
                     alert.description,
                     style: const TextStyle(
@@ -538,11 +572,12 @@ class _FinancialCommandCenterState extends State<FinancialCommandCenter> {
     final hasEnoughData = widget.buckets.length >= 2;
 
     return Container(
-      padding: const EdgeInsets.all(16),
+      padding: const EdgeInsets.all(20),
       decoration: BoxDecoration(
         color: AppTheme.surface,
-        borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: AppTheme.borderColor),
+        borderRadius: BorderRadius.circular(22),
+        border: Border.all(color: AppTheme.borderColor.withValues(alpha: 0.8)),
+        boxShadow: AppTheme.cardShadow,
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -552,14 +587,15 @@ class _FinancialCommandCenterState extends State<FinancialCommandCenter> {
             children: [
               const Row(
                 children: [
-                  Icon(Icons.auto_graph_rounded, size: 18, color: AppTheme.primaryLight),
-                  SizedBox(width: 6),
+                  Icon(Icons.auto_graph_rounded, size: 20, color: AppTheme.primaryLight),
+                  SizedBox(width: 8),
                   Text(
                     'Forward Forecast Snapshot',
                     style: TextStyle(
                       fontSize: 15,
-                      fontWeight: FontWeight.bold,
+                      fontWeight: FontWeight.w800,
                       color: AppTheme.textPrimary,
+                      letterSpacing: -0.2,
                     ),
                   ),
                 ],
@@ -571,26 +607,27 @@ class _FinancialCommandCenterState extends State<FinancialCommandCenter> {
                   minimumSize: const Size(50, 30),
                   tapTargetSize: MaterialTapTargetSize.shrinkWrap,
                 ),
-                child: const Text('Full Outlook'),
+                child: const Text('Full Outlook', style: TextStyle(fontWeight: FontWeight.bold)),
               ),
             ],
           ),
-          const SizedBox(height: 10),
+          const SizedBox(height: 12),
           if (!hasEnoughData) ...[
             Container(
-              padding: const EdgeInsets.all(12),
+              padding: const EdgeInsets.all(14),
               decoration: BoxDecoration(
                 color: AppTheme.surfaceElevated,
-                borderRadius: BorderRadius.circular(10),
+                borderRadius: BorderRadius.circular(14),
+                border: Border.all(color: AppTheme.borderColor.withValues(alpha: 0.7)),
               ),
               child: const Row(
                 children: [
-                  Icon(Icons.info_outline, color: AppTheme.textSecondary, size: 16),
-                  SizedBox(width: 8),
+                  Icon(Icons.info_outline_rounded, color: AppTheme.textSecondary, size: 18),
+                  SizedBox(width: 10),
                   Expanded(
                     child: Text(
                       'Not enough historical data for a reliable forecast (requires 2+ monthly periods).',
-                      style: TextStyle(fontSize: 12, color: AppTheme.textSecondary),
+                      style: TextStyle(fontSize: 12, color: AppTheme.textSecondary, fontWeight: FontWeight.w500),
                     ),
                   ),
                 ],
@@ -607,10 +644,10 @@ class _FinancialCommandCenterState extends State<FinancialCommandCenter> {
                     color: AppTheme.accentColor,
                   ),
                 ),
-                const SizedBox(width: 10),
+                const SizedBox(width: 12),
                 Expanded(
                   child: _buildForecastMetricChip(
-                    label: 'Projected Next Mo. Burn/Flow',
+                    label: 'Projected Next Mo. Flow',
                     amount: _getForecastAmount(ForecastType.cashFlow),
                     currency: currency,
                     color: AppTheme.primaryLight,
@@ -641,25 +678,34 @@ class _FinancialCommandCenterState extends State<FinancialCommandCenter> {
         : 'Estimating...';
 
     return Container(
-      padding: const EdgeInsets.all(10),
+      padding: const EdgeInsets.all(14),
       decoration: BoxDecoration(
         color: AppTheme.surfaceElevated,
-        borderRadius: BorderRadius.circular(10),
-        border: Border.all(color: AppTheme.borderColor),
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: AppTheme.borderColor.withValues(alpha: 0.8)),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Text(
             label,
-            style: const TextStyle(fontSize: 10, color: AppTheme.textSecondary, fontWeight: FontWeight.w500),
+            style: const TextStyle(
+              fontSize: 11,
+              color: AppTheme.textSecondary,
+              fontWeight: FontWeight.w600,
+            ),
             maxLines: 1,
             overflow: TextOverflow.ellipsis,
           ),
-          const SizedBox(height: 4),
+          const SizedBox(height: 6),
           Text(
             formatted,
-            style: TextStyle(fontSize: 15, fontWeight: FontWeight.bold, color: color),
+            style: TextStyle(
+              fontSize: 18,
+              fontWeight: FontWeight.w800,
+              color: color,
+              letterSpacing: -0.3,
+            ),
           ),
         ],
       ),
@@ -671,11 +717,12 @@ class _FinancialCommandCenterState extends State<FinancialCommandCenter> {
   // ==========================================
   Widget _buildTrendVisualizer(String currency) {
     return Container(
-      padding: const EdgeInsets.all(18),
+      padding: const EdgeInsets.all(20),
       decoration: BoxDecoration(
         color: AppTheme.surface,
-        borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: AppTheme.borderColor),
+        borderRadius: BorderRadius.circular(22),
+        border: Border.all(color: AppTheme.borderColor.withValues(alpha: 0.8)),
+        boxShadow: AppTheme.cardShadow,
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -688,14 +735,15 @@ class _FinancialCommandCenterState extends State<FinancialCommandCenter> {
                 'Financial Trends',
                 style: TextStyle(
                   fontSize: 15,
-                  fontWeight: FontWeight.bold,
+                  fontWeight: FontWeight.w800,
                   color: AppTheme.textPrimary,
+                  letterSpacing: -0.2,
                 ),
               ),
               _buildTimeRangeToggle(),
             ],
           ),
-          const SizedBox(height: 12),
+          const SizedBox(height: 14),
           // Metric Chips
           SingleChildScrollView(
             scrollDirection: Axis.horizontal,
@@ -718,7 +766,7 @@ class _FinancialCommandCenterState extends State<FinancialCommandCenter> {
               ],
             ),
           ),
-          const SizedBox(height: 16),
+          const SizedBox(height: 18),
           // Chart Rendering Canvas
           _renderChartCanvas(currency),
         ],
@@ -730,27 +778,30 @@ class _FinancialCommandCenterState extends State<FinancialCommandCenter> {
     return Container(
       decoration: BoxDecoration(
         color: AppTheme.surfaceElevated,
-        borderRadius: BorderRadius.circular(8),
+        borderRadius: BorderRadius.circular(10),
+        border: Border.all(color: AppTheme.borderColor.withValues(alpha: 0.7)),
       ),
-      padding: const EdgeInsets.all(2),
+      padding: const EdgeInsets.all(3),
       child: Row(
         mainAxisSize: MainAxisSize.min,
         children: TrendTimeRange.values.map((range) {
           final isSelected = range == _selectedTimeRange;
           return InkWell(
             onTap: () => setState(() => _selectedTimeRange = range),
-            borderRadius: BorderRadius.circular(6),
+            borderRadius: BorderRadius.circular(8),
             child: Container(
-              padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 3),
-              decoration: BoxDecoration(
-                color: isSelected ? AppTheme.primaryNavy : Colors.transparent,
-                borderRadius: BorderRadius.circular(6),
-              ),
+              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+              decoration: isSelected
+                  ? BoxDecoration(
+                      gradient: AppTheme.primaryGradient,
+                      borderRadius: BorderRadius.circular(8),
+                    )
+                  : null,
               child: Text(
                 range.label,
                 style: TextStyle(
                   fontSize: 10,
-                  fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
+                  fontWeight: isSelected ? FontWeight.bold : FontWeight.w500,
                   color: isSelected ? Colors.white : AppTheme.textSecondary,
                 ),
               ),
@@ -771,20 +822,21 @@ class _FinancialCommandCenterState extends State<FinancialCommandCenter> {
       onTap: () => setState(() => _selectedChartMetric = metric),
       borderRadius: BorderRadius.circular(20),
       child: Container(
-        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
+        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
         decoration: BoxDecoration(
-          color: isSelected ? AppTheme.primaryNavy.withValues(alpha: 0.1) : AppTheme.surfaceElevated,
+          gradient: isSelected ? AppTheme.primaryGradient : null,
+          color: isSelected ? null : AppTheme.surfaceElevated,
           borderRadius: BorderRadius.circular(20),
           border: Border.all(
-            color: isSelected ? AppTheme.primaryNavy : AppTheme.borderColor,
+            color: isSelected ? Colors.transparent : AppTheme.borderColor.withValues(alpha: 0.8),
           ),
         ),
         child: Text(
           label,
           style: TextStyle(
             fontSize: 11,
-            fontWeight: isSelected ? FontWeight.bold : FontWeight.w500,
-            color: isSelected ? AppTheme.primaryNavy : AppTheme.textSecondary,
+            fontWeight: isSelected ? FontWeight.bold : FontWeight.w600,
+            color: isSelected ? Colors.white : AppTheme.textSecondary,
           ),
         ),
       ),
@@ -838,16 +890,16 @@ class _FinancialCommandCenterState extends State<FinancialCommandCenter> {
                                   height: math.max(4.0, 95.0 * revRatio),
                                   decoration: const BoxDecoration(
                                     color: AppTheme.accentColor,
-                                    borderRadius: BorderRadius.vertical(top: Radius.circular(3)),
+                                    borderRadius: BorderRadius.vertical(top: Radius.circular(4)),
                                   ),
                                 ),
-                                const SizedBox(width: 2),
+                                const SizedBox(width: 3),
                                 Container(
                                   width: 10,
                                   height: math.max(4.0, 95.0 * expRatio),
                                   decoration: const BoxDecoration(
                                     color: AppTheme.errorColor,
-                                    borderRadius: BorderRadius.vertical(top: Radius.circular(3)),
+                                    borderRadius: BorderRadius.vertical(top: Radius.circular(4)),
                                   ),
                                 ),
                               ],
@@ -858,7 +910,7 @@ class _FinancialCommandCenterState extends State<FinancialCommandCenter> {
                                   height: math.max(4.0, 95.0 * cashRatio),
                                   decoration: BoxDecoration(
                                     color: isCashPositive ? AppTheme.primaryLight : AppTheme.errorColor,
-                                    borderRadius: const BorderRadius.vertical(top: Radius.circular(3)),
+                                    borderRadius: const BorderRadius.vertical(top: Radius.circular(4)),
                                   ),
                                 )
                               : Container(
@@ -866,15 +918,15 @@ class _FinancialCommandCenterState extends State<FinancialCommandCenter> {
                                   height: math.max(4.0, 95.0 * (bucket.revenue > 0 ? (bucket.profit / bucket.revenue).clamp(0.0, 1.0) : 0.05)),
                                   decoration: BoxDecoration(
                                     color: bucket.profit >= 0 ? AppTheme.accentColor : AppTheme.errorColor,
-                                    borderRadius: const BorderRadius.vertical(top: Radius.circular(3)),
+                                    borderRadius: const BorderRadius.vertical(top: Radius.circular(4)),
                                   ),
                                 ),
                     ),
                   ),
-                  const SizedBox(height: 6),
+                  const SizedBox(height: 8),
                   Text(
                     bucket.label.split(' ').first,
-                    style: const TextStyle(fontSize: 10, color: AppTheme.textSecondary),
+                    style: const TextStyle(fontSize: 10, color: AppTheme.textSecondary, fontWeight: FontWeight.w600),
                   ),
                 ],
               ),
@@ -890,23 +942,30 @@ class _FinancialCommandCenterState extends State<FinancialCommandCenter> {
   // ==========================================
   Widget _buildWhatIfSimulatorLauncher() {
     return Container(
-      padding: const EdgeInsets.all(16),
+      padding: const EdgeInsets.all(18),
       decoration: BoxDecoration(
-        color: AppTheme.surfaceElevated,
-        borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: AppTheme.borderColor),
+        color: AppTheme.surface,
+        borderRadius: BorderRadius.circular(22),
+        border: Border.all(color: AppTheme.borderColor.withValues(alpha: 0.8)),
+        boxShadow: AppTheme.cardShadow,
       ),
       child: Row(
         children: [
           Container(
-            padding: const EdgeInsets.all(10),
+            padding: const EdgeInsets.all(12),
             decoration: BoxDecoration(
-              color: AppTheme.primaryNavy,
-              borderRadius: BorderRadius.circular(12),
+              gradient: AppTheme.primaryGradient,
+              borderRadius: BorderRadius.circular(14),
+              boxShadow: [
+                BoxShadow(
+                  color: AppTheme.primaryColor.withValues(alpha: 0.25),
+                  blurRadius: 8,
+                ),
+              ],
             ),
-            child: const Icon(Icons.tune_rounded, color: AppTheme.primaryLight, size: 20),
+            child: const Icon(Icons.tune_rounded, color: Colors.white, size: 22),
           ),
-          const SizedBox(width: 12),
+          const SizedBox(width: 14),
           const Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
@@ -915,8 +974,9 @@ class _FinancialCommandCenterState extends State<FinancialCommandCenter> {
                   'What-If Scenario Simulator',
                   style: TextStyle(
                     fontSize: 14,
-                    fontWeight: FontWeight.bold,
+                    fontWeight: FontWeight.w800,
                     color: AppTheme.textPrimary,
+                    letterSpacing: -0.2,
                   ),
                 ),
                 SizedBox(height: 2),
@@ -927,12 +987,14 @@ class _FinancialCommandCenterState extends State<FinancialCommandCenter> {
               ],
             ),
           ),
+          const SizedBox(width: 8),
           ElevatedButton(
             onPressed: widget.onNavigateToSimulations,
             style: ElevatedButton.styleFrom(
               backgroundColor: AppTheme.primaryNavy,
               foregroundColor: Colors.white,
-              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+              padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
               textStyle: const TextStyle(fontSize: 12, fontWeight: FontWeight.bold),
             ),
             child: const Text('Simulate'),
@@ -955,18 +1017,19 @@ class _FinancialCommandCenterState extends State<FinancialCommandCenter> {
             const Text(
               'Recent Activity',
               style: TextStyle(
-                fontSize: 16,
-                fontWeight: FontWeight.bold,
+                fontSize: 17,
+                fontWeight: FontWeight.w800,
                 color: AppTheme.textPrimary,
+                letterSpacing: -0.2,
               ),
             ),
             TextButton(
               onPressed: widget.onNavigateToTransactions,
-              child: const Text('View All Transactions'),
+              child: const Text('View Ledger', style: TextStyle(fontWeight: FontWeight.bold)),
             ),
           ],
         ),
-        const SizedBox(height: 8),
+        const SizedBox(height: 10),
         ...widget.recentTransactions.take(5).map((t) {
           return TransactionTile(
             transaction: t,
@@ -983,39 +1046,48 @@ class _FinancialCommandCenterState extends State<FinancialCommandCenter> {
   // ==========================================
   Widget _buildEmptyOnboardingState() {
     return Container(
-      padding: const EdgeInsets.all(28),
+      padding: const EdgeInsets.all(32),
       decoration: BoxDecoration(
         color: AppTheme.surface,
-        borderRadius: BorderRadius.circular(20),
-        border: Border.all(color: AppTheme.borderColor),
+        borderRadius: BorderRadius.circular(26),
+        border: Border.all(color: AppTheme.borderColor.withValues(alpha: 0.8)),
+        boxShadow: AppTheme.cardShadow,
       ),
       child: Column(
         children: [
           Container(
-            width: 64,
-            height: 64,
-            decoration: const BoxDecoration(
-              color: AppTheme.primaryNavy,
+            width: 72,
+            height: 72,
+            decoration: BoxDecoration(
+              gradient: AppTheme.primaryGradient,
               shape: BoxShape.circle,
+              boxShadow: [
+                BoxShadow(
+                  color: AppTheme.primaryLight.withValues(alpha: 0.35),
+                  blurRadius: 16,
+                  offset: const Offset(0, 4),
+                ),
+              ],
             ),
-            child: const Icon(Icons.account_balance_rounded, size: 32, color: AppTheme.primaryLight),
+            child: const Icon(Icons.account_balance_rounded, size: 36, color: Colors.white),
           ),
-          const SizedBox(height: 16),
+          const SizedBox(height: 20),
           Text(
             'Welcome to ${widget.business.name}',
             style: const TextStyle(
-              fontSize: 18,
-              fontWeight: FontWeight.bold,
+              fontSize: 20,
+              fontWeight: FontWeight.w800,
               color: AppTheme.textPrimary,
+              letterSpacing: -0.3,
             ),
           ),
-          const SizedBox(height: 6),
+          const SizedBox(height: 8),
           const Text(
             'Import your transaction history to activate deterministic Financial Health scoring, automated risk alerts, and your AI CFO.',
             textAlign: TextAlign.center,
-            style: TextStyle(fontSize: 13, color: AppTheme.textSecondary, height: 1.4),
+            style: TextStyle(fontSize: 13, color: AppTheme.textSecondary, height: 1.45),
           ),
-          const SizedBox(height: 24),
+          const SizedBox(height: 26),
           ElevatedButton.icon(
             onPressed: widget.onOpenCsvImport,
             icon: const Icon(Icons.upload_file_rounded, size: 18),
@@ -1023,17 +1095,19 @@ class _FinancialCommandCenterState extends State<FinancialCommandCenter> {
             style: ElevatedButton.styleFrom(
               backgroundColor: AppTheme.primaryNavy,
               foregroundColor: Colors.white,
-              minimumSize: const Size(double.infinity, 44),
+              minimumSize: const Size(double.infinity, 48),
+              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
             ),
           ),
-          const SizedBox(height: 10),
+          const SizedBox(height: 12),
           OutlinedButton.icon(
             onPressed: widget.onOpenAddTransaction,
             icon: const Icon(Icons.add_rounded, size: 18),
             label: const Text('Add Manual Transaction'),
             style: OutlinedButton.styleFrom(
               foregroundColor: AppTheme.primaryNavy,
-              minimumSize: const Size(double.infinity, 44),
+              minimumSize: const Size(double.infinity, 48),
+              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
             ),
           ),
         ],

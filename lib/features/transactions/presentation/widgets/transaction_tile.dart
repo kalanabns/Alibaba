@@ -28,17 +28,17 @@ class TransactionTile extends StatelessWidget {
     final String amountPrefix;
 
     if (isIncome) {
-      badgeColor = AppTheme.accentColor.withValues(alpha: 0.15);
+      badgeColor = AppTheme.accentColor.withValues(alpha: 0.12);
       iconColor = AppTheme.accentColor;
       iconData = Icons.arrow_downward_rounded;
       amountPrefix = '+';
     } else if (isTransfer) {
-      badgeColor = AppTheme.infoColor.withValues(alpha: 0.15);
+      badgeColor = AppTheme.infoColor.withValues(alpha: 0.12);
       iconColor = AppTheme.infoColor;
       iconData = Icons.swap_horiz_rounded;
       amountPrefix = '';
     } else {
-      badgeColor = AppTheme.errorColor.withValues(alpha: 0.15);
+      badgeColor = AppTheme.errorColor.withValues(alpha: 0.12);
       iconColor = AppTheme.errorColor;
       iconData = Icons.arrow_upward_rounded;
       amountPrefix = '-';
@@ -48,33 +48,35 @@ class TransactionTile extends StatelessWidget {
         '${transaction.transactionDate.year}-${transaction.transactionDate.month.toString().padLeft(2, '0')}-${transaction.transactionDate.day.toString().padLeft(2, '0')}';
 
     return Container(
-      margin: const EdgeInsets.only(bottom: 10),
+      margin: const EdgeInsets.only(bottom: 12),
       decoration: BoxDecoration(
         color: AppTheme.surface,
-        borderRadius: BorderRadius.circular(14),
-        border: Border.all(color: AppTheme.borderColor),
+        borderRadius: BorderRadius.circular(18),
+        border: Border.all(color: AppTheme.borderColor.withValues(alpha: 0.8)),
+        boxShadow: AppTheme.cardShadow,
       ),
       child: Material(
         color: Colors.transparent,
-        borderRadius: BorderRadius.circular(14),
+        borderRadius: BorderRadius.circular(18),
         child: InkWell(
-          borderRadius: BorderRadius.circular(14),
+          borderRadius: BorderRadius.circular(18),
           onTap: onTap,
           child: Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
             child: Row(
               children: [
                 // Direction Icon
                 Container(
-                  width: 42,
-                  height: 42,
+                  width: 44,
+                  height: 44,
                   decoration: BoxDecoration(
                     color: badgeColor,
-                    borderRadius: BorderRadius.circular(10),
+                    borderRadius: BorderRadius.circular(14),
+                    border: Border.all(color: iconColor.withValues(alpha: 0.2)),
                   ),
                   child: Icon(iconData, color: iconColor, size: 20),
                 ),
-                const SizedBox(width: 12),
+                const SizedBox(width: 14),
                 // Title and Meta
                 Expanded(
                   child: Column(
@@ -85,7 +87,8 @@ class TransactionTile extends StatelessWidget {
                         style: const TextStyle(
                           color: AppTheme.textPrimary,
                           fontSize: 14,
-                          fontWeight: FontWeight.w600,
+                          fontWeight: FontWeight.w700,
+                          letterSpacing: -0.1,
                         ),
                         maxLines: 1,
                         overflow: TextOverflow.ellipsis,
@@ -134,23 +137,24 @@ class TransactionTile extends StatelessWidget {
                               decoration: BoxDecoration(
                                 color:
                                     transaction.paymentStatus ==
-                                        PaymentStatus.overdue
-                                    ? AppTheme.errorColor.withValues(alpha: 0.2)
-                                    : AppTheme.warningColor.withValues(
-                                        alpha: 0.2,
-                                      ),
-                                borderRadius: BorderRadius.circular(4),
+                                            PaymentStatus.overdue
+                                        ? AppTheme.errorColor.withValues(alpha: 0.15)
+                                        : AppTheme.warningColor.withValues(
+                                            alpha: 0.15,
+                                          ),
+                                borderRadius: BorderRadius.circular(6),
                               ),
                               child: Text(
                                 transaction.paymentStatus.name.toUpperCase(),
                                 style: TextStyle(
-                                  fontSize: 10,
-                                  fontWeight: FontWeight.bold,
+                                  fontSize: 9,
+                                  fontWeight: FontWeight.w800,
+                                  letterSpacing: 0.4,
                                   color:
                                       transaction.paymentStatus ==
-                                          PaymentStatus.overdue
-                                      ? AppTheme.errorColor
-                                      : AppTheme.warningColor,
+                                              PaymentStatus.overdue
+                                          ? AppTheme.errorColor
+                                          : AppTheme.warningColor,
                                 ),
                               ),
                             ),
@@ -170,7 +174,8 @@ class TransactionTile extends StatelessWidget {
                       style: TextStyle(
                         color: iconColor,
                         fontSize: 15,
-                        fontWeight: FontWeight.bold,
+                        fontWeight: FontWeight.w800,
+                        letterSpacing: -0.2,
                       ),
                     ),
                     if (transaction.source == TransactionSource.csv) ...[
@@ -180,6 +185,7 @@ class TransactionTile extends StatelessWidget {
                         style: TextStyle(
                           color: AppTheme.textMuted,
                           fontSize: 10,
+                          fontWeight: FontWeight.w500,
                         ),
                       ),
                     ],

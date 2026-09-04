@@ -13,11 +13,21 @@ class SimulationsScreen extends StatefulWidget {
     required this.business,
     required this.transactionsController,
     required this.currentMetric,
+    this.initialScenarioType,
+    this.initialPercentageDelta,
+    this.initialTargetCategory,
+    this.initialFixedAmountDelta,
+    this.initialScenarioName,
   });
 
   final Business business;
   final TransactionController transactionsController;
   final FinancialMetric? currentMetric;
+  final ScenarioType? initialScenarioType;
+  final double? initialPercentageDelta;
+  final String? initialTargetCategory;
+  final double? initialFixedAmountDelta;
+  final String? initialScenarioName;
 
   @override
   State<SimulationsScreen> createState() => _SimulationsScreenState();
@@ -43,6 +53,22 @@ class _SimulationsScreenState extends State<SimulationsScreen> {
     super.initState();
     _controller = SimulationController();
     _controller.addListener(_onControllerUpdate);
+
+    if (widget.initialScenarioType != null) {
+      _controller.setScenarioType(widget.initialScenarioType!);
+    }
+    if (widget.initialPercentageDelta != null) {
+      _controller.setPercentageDelta(widget.initialPercentageDelta!);
+    }
+    if (widget.initialTargetCategory != null) {
+      _controller.setTargetCategory(widget.initialTargetCategory!);
+    }
+    if (widget.initialFixedAmountDelta != null) {
+      _controller.setFixedAmountDelta(widget.initialFixedAmountDelta!);
+    }
+    if (widget.initialScenarioName != null) {
+      _controller.setScenarioName(widget.initialScenarioName!);
+    }
 
     WidgetsBinding.instance.addPostFrameCallback((_) {
       _runCurrentSimulation();

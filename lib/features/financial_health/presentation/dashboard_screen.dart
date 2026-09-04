@@ -186,24 +186,25 @@ class _DashboardScreenState extends State<DashboardScreen> {
             },
             child: SingleChildScrollView(
               physics: const AlwaysScrollableScrollPhysics(),
-              padding: const EdgeInsets.fromLTRB(20, 16, 20, 32),
+              padding: const EdgeInsets.fromLTRB(20, 18, 20, 36),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: [
-                  // Business Header & Period Selector
+                  // Overview Title & Period Selector
                   Row(
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    crossAxisAlignment: CrossAxisAlignment.start,
+                    crossAxisAlignment: CrossAxisAlignment.center,
                     children: [
                       Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
                           const Text(
-                            'Financial Health Overview',
+                            'EXECUTIVE RADAR',
                             style: TextStyle(
-                              fontSize: 13,
-                              color: AppTheme.textSecondary,
-                              fontWeight: FontWeight.w500,
+                              fontSize: 11,
+                              color: AppTheme.primaryColor,
+                              fontWeight: FontWeight.w800,
+                              letterSpacing: 0.8,
                             ),
                           ),
                           const SizedBox(height: 2),
@@ -211,9 +212,9 @@ class _DashboardScreenState extends State<DashboardScreen> {
                             widget.business.name,
                             style: const TextStyle(
                               fontSize: 22,
-                              fontWeight: FontWeight.bold,
+                              fontWeight: FontWeight.w900,
                               color: AppTheme.textPrimary,
-                              letterSpacing: -0.3,
+                              letterSpacing: -0.4,
                             ),
                           ),
                         ],
@@ -228,7 +229,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
                     business: widget.business,
                     metric: metric,
                     previousMetric: widget.healthController.monthlyBuckets.length >= 2
-                        ? null // previous metrics are captured in metric growth rates
+                        ? null
                         : null,
                     breakdown: breakdown,
                     buckets: widget.healthController.monthlyBuckets,
@@ -295,8 +296,8 @@ class _DashboardScreenState extends State<DashboardScreen> {
     return Container(
       decoration: BoxDecoration(
         color: AppTheme.surfaceElevated,
-        borderRadius: BorderRadius.circular(10),
-        border: Border.all(color: AppTheme.borderColor),
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: AppTheme.borderColor.withValues(alpha: 0.8)),
       ),
       padding: const EdgeInsets.all(3),
       child: Row(
@@ -322,19 +323,27 @@ class _DashboardScreenState extends State<DashboardScreen> {
                 );
               }
             },
-            borderRadius: BorderRadius.circular(8),
+            borderRadius: BorderRadius.circular(9),
             child: Container(
               padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
               decoration: BoxDecoration(
-                color: isSelected ? AppTheme.primaryNavy : Colors.transparent,
-                borderRadius: BorderRadius.circular(8),
+                gradient: isSelected ? AppTheme.primaryGradient : null,
+                borderRadius: BorderRadius.circular(9),
+                boxShadow: isSelected
+                    ? [
+                        BoxShadow(
+                          color: AppTheme.primaryColor.withValues(alpha: 0.25),
+                          blurRadius: 6,
+                        ),
+                      ]
+                    : null,
               ),
               child: Text(
                 range.shortLabel,
                 style: TextStyle(
                   color: isSelected ? Colors.white : AppTheme.textSecondary,
-                  fontSize: 12,
-                  fontWeight: isSelected ? FontWeight.bold : FontWeight.w500,
+                  fontSize: 11,
+                  fontWeight: isSelected ? FontWeight.w800 : FontWeight.w600,
                 ),
               ),
             ),

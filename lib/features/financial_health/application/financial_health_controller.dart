@@ -27,6 +27,7 @@ class FinancialHealthController extends ChangeNotifier {
   FinancialPeriodRange _selectedPeriod = FinancialPeriodRange.oneMonth;
 
   FinancialMetric? _currentMetric;
+  FinancialMetric? _previousMetric;
   HealthScoreBreakdown? _healthBreakdown;
   List<MonthlyFinancialBucket> _monthlyBuckets = [];
   bool _hasTransactions = false;
@@ -35,6 +36,7 @@ class FinancialHealthController extends ChangeNotifier {
   String? get errorMessage => _errorMessage;
   FinancialPeriodRange get selectedPeriod => _selectedPeriod;
   FinancialMetric? get currentMetric => _currentMetric;
+  FinancialMetric? get previousMetric => _previousMetric;
   HealthScoreBreakdown? get healthBreakdown => _healthBreakdown;
   List<MonthlyFinancialBucket> get monthlyBuckets => _monthlyBuckets;
   bool get hasTransactions => _hasTransactions;
@@ -145,6 +147,17 @@ class FinancialHealthController extends ChangeNotifier {
         expenseGrowth: computedMetric.expenseGrowth,
         hasPreviousPeriod: prevTransactions.isNotEmpty,
       );
+
+      if (prevTransactions.isNotEmpty) {
+        _previousMetric = FinancialEngine.calculatePeriodMetrics(
+          businessId: businessId,
+          periodStart: prevStart,
+          periodEnd: prevEnd,
+          currentTransactions: prevTransactions,
+        );
+      } else {
+        _previousMetric = null;
+      }
 
       _currentMetric = computedMetric;
 
