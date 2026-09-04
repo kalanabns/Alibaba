@@ -12,8 +12,12 @@ import '../../transactions/presentation/add_edit_transaction_dialog.dart';
 import '../../transactions/presentation/csv_import_flow.dart';
 import '../../transactions/presentation/widgets/transaction_tile.dart';
 import '../application/financial_health_controller.dart';
+import '../../forecasts/application/forecast_controller.dart';
+import '../../forecasts/presentation/forecast_screen.dart';
+import '../../simulations/presentation/simulations_screen.dart';
 import 'widgets/ai_summary_card.dart';
 import 'widgets/financial_charts.dart';
+import 'widgets/financial_outlook_card.dart';
 import 'widgets/financial_signals_preview.dart';
 import 'widgets/health_score_card.dart';
 import 'widgets/kpi_metric_card.dart';
@@ -25,10 +29,13 @@ class DashboardScreen extends StatefulWidget {
     required this.transactionController,
     required this.alertsController,
     required this.aiCfoController,
+    this.forecastController,
     required this.business,
     required this.onNavigateToTransactions,
     required this.onNavigateToAlerts,
     required this.onNavigateToAiCfo,
+    this.onNavigateToForecasts,
+    this.onNavigateToSimulations,
     this.onExplainAlert,
   });
 
@@ -36,10 +43,13 @@ class DashboardScreen extends StatefulWidget {
   final TransactionController transactionController;
   final AlertsController alertsController;
   final AICFOController aiCfoController;
+  final ForecastController? forecastController;
   final Business business;
   final VoidCallback onNavigateToTransactions;
   final VoidCallback onNavigateToAlerts;
   final VoidCallback onNavigateToAiCfo;
+  final VoidCallback? onNavigateToForecasts;
+  final VoidCallback? onNavigateToSimulations;
   final void Function(Alert alert)? onExplainAlert;
 
   @override
@@ -73,6 +83,13 @@ class _DashboardScreenState extends State<DashboardScreen> {
         currentMetrics: currentMetric,
         business: widget.business,
         activeAlerts: widget.alertsController.allAlerts,
+      );
+
+      widget.forecastController?.generateAndSyncForecasts(
+        businessId: widget.business.id,
+        buckets: widget.healthController.monthlyBuckets,
+        startingCash: widget.business.startingCash,
+        silent: true,
       );
     }
   }
@@ -255,7 +272,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
                           physics: const NeverScrollableScrollPhysics(),
                           mainAxisSpacing: 12,
                           crossAxisSpacing: 12,
-                          childAspectRatio: isTablet ? 1.3 : 1.15,
+                          childAspectRatio: isTablet ? 1.5 : 1.2,
                           children: [
                             KpiMetricCard(
                               title: 'Revenue',
@@ -312,7 +329,53 @@ class _DashboardScreenState extends State<DashboardScreen> {
                     ),
                     const SizedBox(height: 16),
 
-                    // 5. Financial Charts
+                    // 5. Forward-Looking Financial Outlook (Stage 7)
+                    if (widget.forecastController != null &&
+                        widget.forecastController!.evaluation.isSufficient) ...[
+                      FinancialOutlookCard(
+                        evaluation: widget.forecastController!.evaluation,
+                        currency: currency,
+                        onViewFullForecast: () {
+                          if (widget.onNavigateToForecasts != null) {
+                            widget.onNavigateToForecasts!();
+                          } else {
+                            Navigator.push(
+                              context,
+                              MaterialPageRoute(
+                                builder: (_) => ForecastScreen(
+                                  controller: widget.forecastController!,
+                                  business: widget.business,
+                                  historicalBuckets:
+                                      widget.healthController.monthlyBuckets,
+                                  onAskAiAboutForecast: (query) {
+                                    widget.onNavigateToAiCfo();
+                                    widget.aiCfoController.sendMessage(
+                                      message: query,
+                                      businessId: widget.business.id,
+                                      currentMetrics:
+                                          widget.healthController.currentMetric,
+                                      business: widget.business,
+                                      activeAlerts:
+                                          widget.alertsController.allAlerts,
+                                      recentTransactions: widget
+                                          .transactionController
+                                          .transactions,
+                                    );
+                                  },
+                                ),
+                              ),
+                            );
+                          }
+                        },
+                      ),
+                      const SizedBox(height: 16),
+                    ],
+
+                    // 6. What-If Scenario Simulator Card (Stage 8)
+                    _buildWhatIfSimulatorLauncher(context),
+                    const SizedBox(height: 16),
+
+                    // 7. Financial Charts
                     RevenueExpensesChart(
                       buckets: widget.healthController.monthlyBuckets,
                       currency: currency,
@@ -324,7 +387,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
                     ),
                     const SizedBox(height: 20),
 
-                    // 6. Recent Transactions Section
+                    // 8. Recent Transactions Section
                     Row(
                       mainAxisAlignment: MainAxisAlignment.spaceBetween,
                       children: [
@@ -476,6 +539,93 @@ class _DashboardScreenState extends State<DashboardScreen> {
                 label: const Text('Add Transaction'),
               ),
             ],
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildWhatIfSimulatorLauncher(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: AppTheme.cardBorder),
+        boxShadow: const [
+          BoxShadow(
+            color: Color(0x06000000),
+            blurRadius: 8,
+            offset: Offset(0, 2),
+          ),
+        ],
+      ),
+      child: Row(
+        children: [
+          Container(
+            padding: const EdgeInsets.all(12),
+            decoration: BoxDecoration(
+              color: AppTheme.navyPrimary.withAlpha(20),
+              borderRadius: BorderRadius.circular(12),
+            ),
+            child: const Icon(
+              Icons.tune_rounded,
+              color: AppTheme.navyPrimary,
+              size: 24,
+            ),
+          ),
+          const SizedBox(width: 14),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: const [
+                Text(
+                  'What-If Scenario Simulator',
+                  style: TextStyle(
+                    fontSize: 15,
+                    fontWeight: FontWeight.w700,
+                    color: AppTheme.navyDeep,
+                  ),
+                ),
+                SizedBox(height: 2),
+                Text(
+                  'Simulate revenue changes, cost cuts, or hiring before making decisions.',
+                  style: TextStyle(fontSize: 12, color: AppTheme.textSecondary),
+                ),
+              ],
+            ),
+          ),
+          const SizedBox(width: 8),
+          ElevatedButton(
+            onPressed: () {
+              if (widget.onNavigateToSimulations != null) {
+                widget.onNavigateToSimulations!();
+              } else {
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                    builder: (_) => SimulationsScreen(
+                      business: widget.business,
+                      transactionsController: widget.transactionController,
+                      currentMetric: widget.healthController.currentMetric,
+                    ),
+                  ),
+                );
+              }
+            },
+            style: ElevatedButton.styleFrom(
+              backgroundColor: AppTheme.navyPrimary,
+              foregroundColor: Colors.white,
+              padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+              textStyle: const TextStyle(
+                fontSize: 12,
+                fontWeight: FontWeight.w700,
+              ),
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(10),
+              ),
+            ),
+            child: const Text('Simulate'),
           ),
         ],
       ),

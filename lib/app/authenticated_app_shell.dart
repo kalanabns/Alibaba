@@ -9,6 +9,9 @@ import '../features/authentication/application/auth_controller.dart';
 import '../features/businesses/application/business_controller.dart';
 import '../features/financial_health/application/financial_health_controller.dart';
 import '../features/financial_health/presentation/dashboard_screen.dart';
+import '../features/forecasts/application/forecast_controller.dart';
+import '../features/forecasts/presentation/forecast_screen.dart';
+import '../features/simulations/presentation/simulations_screen.dart';
 import '../features/transactions/application/transaction_controller.dart';
 import '../features/transactions/presentation/transactions_screen.dart';
 
@@ -32,6 +35,7 @@ class _AuthenticatedAppShellState extends State<AuthenticatedAppShell> {
   late final FinancialHealthController _healthController;
   late final AlertsController _alertsController;
   late final AICFOController _aiCfoController;
+  late final ForecastController _forecastController;
 
   Alert? _alertToExplainInAi;
 
@@ -41,6 +45,7 @@ class _AuthenticatedAppShellState extends State<AuthenticatedAppShell> {
     _healthController = FinancialHealthController();
     _alertsController = AlertsController();
     _aiCfoController = AICFOController();
+    _forecastController = ForecastController();
 
     _transactionController = TransactionController(
       onTransactionsChanged: () {
@@ -84,6 +89,13 @@ class _AuthenticatedAppShellState extends State<AuthenticatedAppShell> {
         business: business,
         activeAlerts: _alertsController.allAlerts,
       );
+
+      _forecastController.generateAndSyncForecasts(
+        businessId: business.id,
+        buckets: _healthController.monthlyBuckets,
+        startingCash: business.startingCash,
+        silent: silent,
+      );
     }
   }
 
@@ -93,12 +105,57 @@ class _AuthenticatedAppShellState extends State<AuthenticatedAppShell> {
     _healthController.dispose();
     _alertsController.dispose();
     _aiCfoController.dispose();
+    _forecastController.dispose();
     super.dispose();
   }
 
   void _handleSignOut() {
     widget.businessController.reset();
     widget.authController.signOut();
+  }
+
+  void _openForecastsScreen(BuildContext context) {
+    final business = widget.businessController.currentBusiness;
+    if (business == null) return;
+
+    Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (_) => ForecastScreen(
+          controller: _forecastController,
+          business: business,
+          historicalBuckets: _healthController.monthlyBuckets,
+          onAskAiAboutForecast: (query) {
+            _selectedIndex = 2;
+            setState(() {});
+            _aiCfoController.sendMessage(
+              message: query,
+              businessId: business.id,
+              currentMetrics: _healthController.currentMetric,
+              business: business,
+              activeAlerts: _alertsController.allAlerts,
+              recentTransactions: _transactionController.transactions,
+            );
+          },
+        ),
+      ),
+    );
+  }
+
+  void _openSimulationsScreen(BuildContext context) {
+    final business = widget.businessController.currentBusiness;
+    if (business == null) return;
+
+    Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (_) => SimulationsScreen(
+          business: business,
+          transactionsController: _transactionController,
+          currentMetric: _healthController.currentMetric,
+        ),
+      ),
+    );
   }
 
   void _navigateToAiCfoWithAlert(Alert alert) {
@@ -138,6 +195,7 @@ class _AuthenticatedAppShellState extends State<AuthenticatedAppShell> {
             transactionController: _transactionController,
             alertsController: _alertsController,
             aiCfoController: _aiCfoController,
+            forecastController: _forecastController,
             business: business,
             onNavigateToTransactions: () {
               setState(() => _selectedIndex = 1);
@@ -148,6 +206,8 @@ class _AuthenticatedAppShellState extends State<AuthenticatedAppShell> {
             onNavigateToAiCfo: () {
               setState(() => _selectedIndex = 2);
             },
+            onNavigateToForecasts: () => _openForecastsScreen(context),
+            onNavigateToSimulations: () => _openSimulationsScreen(context),
             onExplainAlert: _navigateToAiCfoWithAlert,
           ),
           TransactionsScreen(
@@ -214,6 +274,24 @@ class _AuthenticatedAppShellState extends State<AuthenticatedAppShell> {
               ],
             ),
             actions: [
+              IconButton(
+                icon: const Icon(
+                  Icons.auto_graph_rounded,
+                  color: Colors.white70,
+                  size: 20,
+                ),
+                tooltip: 'Forecasts',
+                onPressed: () => _openForecastsScreen(context),
+              ),
+              IconButton(
+                icon: const Icon(
+                  Icons.tune_rounded,
+                  color: Colors.white70,
+                  size: 20,
+                ),
+                tooltip: 'What-If Simulator',
+                onPressed: () => _openSimulationsScreen(context),
+              ),
               IconButton(
                 icon: const Icon(
                   Icons.logout_rounded,

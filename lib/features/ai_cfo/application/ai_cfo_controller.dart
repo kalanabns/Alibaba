@@ -9,8 +9,8 @@ import '../domain/ai_conversation.dart';
 
 class AICFOController extends ChangeNotifier {
   AICFOController({AICFORepository? repository})
-      : _repository = repository ?? AICFORepository(),
-        _sessionId = _generateUniqueId();
+    : _repository = repository ?? AICFORepository(),
+      _sessionId = _generateUniqueId();
 
   final AICFORepository _repository;
 

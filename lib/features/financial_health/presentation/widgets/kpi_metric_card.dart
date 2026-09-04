@@ -59,7 +59,7 @@ class KpiMetricCard extends StatelessWidget {
     }
 
     return Container(
-      padding: const EdgeInsets.all(16),
+      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
       decoration: BoxDecoration(
         color: AppTheme.surface,
         borderRadius: BorderRadius.circular(16),
@@ -73,39 +73,43 @@ class KpiMetricCard extends StatelessWidget {
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              Text(
-                title,
-                style: const TextStyle(
-                  color: AppTheme.textSecondary,
-                  fontSize: 13,
-                  fontWeight: FontWeight.w500,
+              Flexible(
+                child: Text(
+                  title,
+                  style: const TextStyle(
+                    color: AppTheme.textSecondary,
+                    fontSize: 12,
+                    fontWeight: FontWeight.w500,
+                  ),
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
                 ),
               ),
               Container(
-                width: 32,
-                height: 32,
+                width: 28,
+                height: 28,
                 decoration: BoxDecoration(
                   color: color.withValues(alpha: 0.12),
                   borderRadius: BorderRadius.circular(8),
                 ),
-                child: Icon(icon, size: 16, color: color),
+                child: Icon(icon, size: 15, color: color),
               ),
             ],
           ),
-          const SizedBox(height: 12),
+          const SizedBox(height: 6),
           // Amount
           Text(
             formattedAmount,
             style: const TextStyle(
               color: AppTheme.textPrimary,
-              fontSize: 22,
+              fontSize: 20,
               fontWeight: FontWeight.bold,
               letterSpacing: -0.3,
             ),
             maxLines: 1,
             overflow: TextOverflow.ellipsis,
           ),
-          const SizedBox(height: 8),
+          const SizedBox(height: 6),
           // Growth Badge or Subtitle
           Row(
             children: [
@@ -114,7 +118,7 @@ class KpiMetricCard extends StatelessWidget {
                   growthIcon != null) ...[
                 Container(
                   padding: const EdgeInsets.symmetric(
-                    horizontal: 6,
+                    horizontal: 5,
                     vertical: 2,
                   ),
                   decoration: BoxDecoration(
@@ -124,36 +128,48 @@ class KpiMetricCard extends StatelessWidget {
                   child: Row(
                     mainAxisSize: MainAxisSize.min,
                     children: [
-                      Icon(growthIcon, size: 12, color: growthColor),
+                      Icon(growthIcon, size: 11, color: growthColor),
                       const SizedBox(width: 2),
                       Text(
                         growthText,
                         style: TextStyle(
                           color: growthColor,
-                          fontSize: 11,
+                          fontSize: 10,
                           fontWeight: FontWeight.bold,
                         ),
                       ),
                     ],
                   ),
                 ),
-                const SizedBox(width: 6),
-                const Text(
-                  'vs prev',
-                  style: TextStyle(color: AppTheme.textMuted, fontSize: 11),
+                const SizedBox(width: 4),
+                const Flexible(
+                  child: Text(
+                    'vs prev',
+                    style: TextStyle(color: AppTheme.textMuted, fontSize: 10),
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                  ),
                 ),
               ] else if (subtitle != null) ...[
-                Text(
-                  subtitle!,
-                  style: const TextStyle(
-                    color: AppTheme.textMuted,
-                    fontSize: 11,
+                Flexible(
+                  child: Text(
+                    subtitle!,
+                    style: const TextStyle(
+                      color: AppTheme.textMuted,
+                      fontSize: 10,
+                    ),
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
                   ),
                 ),
               ] else ...[
-                const Text(
-                  'Current period',
-                  style: TextStyle(color: AppTheme.textMuted, fontSize: 11),
+                const Flexible(
+                  child: Text(
+                    'Current period',
+                    style: TextStyle(color: AppTheme.textMuted, fontSize: 10),
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                  ),
                 ),
               ],
             ],

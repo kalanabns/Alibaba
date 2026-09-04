@@ -1,3 +1,5 @@
+import 'dart:convert';
+import 'dart:io';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import '../../alerts/domain/alert.dart';
 import '../../businesses/domain/business.dart';
@@ -29,7 +31,7 @@ class AICFORepository {
         .toList();
   }
 
-  /// Sends a message to the AI CFO via Supabase Edge Function (or direct secure DB fallback),
+  /// Sends a message to the AI CFO via Supabase Edge Function or live Gemini API,
   /// returning the grounded advisory reply.
   Future<String> sendMessage({
     required String businessId,
@@ -46,8 +48,37 @@ class AICFORepository {
       throw StateError('User not authenticated.');
     }
 
+    // 1. Check if Gemini API key is supplied via --dart-define-from-file
+    const geminiKey = String.fromEnvironment('GEMINI_API_KEY');
+    if (geminiKey.isNotEmpty) {
+      try {
+        final geminiReply = await _callGeminiApi(
+          apiKey: geminiKey,
+          message: message,
+          business: business,
+          currentMetrics: currentMetrics,
+          alertContext: alertContext,
+          activeAlerts: activeAlerts,
+          recentTransactions: recentTransactions,
+        );
+
+        if (geminiReply != null && geminiReply.trim().isNotEmpty) {
+          await _persistTurn(
+            businessId: businessId,
+            userId: user.id,
+            sessionId: sessionId,
+            userMessage: message,
+            assistantMessage: geminiReply,
+          );
+          return geminiReply;
+        }
+      } catch (_) {
+        // Fall through to Edge Function or grounded generator
+      }
+    }
+
     try {
-      // 1. Try calling the Supabase Edge Function 'ai-cfo'
+      // 2. Try calling the Supabase Edge Function 'ai-cfo'
       final functionResponse = await _client.functions.invoke(
         'ai-cfo',
         body: {
@@ -75,7 +106,7 @@ class AICFORepository {
       // Fall through to secure client-side grounded generator + DB persistence
     }
 
-    // 2. Client-safe Grounded AI Advisor fallback
+    // 3. Client-safe Grounded AI Advisor fallback
     final groundedReply = generateAdvisoryResponse(
       message: message,
       alert: alertContext,
@@ -84,24 +115,128 @@ class AICFORepository {
     );
 
     // Persist conversation turns directly into Supabase ai_conversations table
+    await _persistTurn(
+      businessId: businessId,
+      userId: user.id,
+      sessionId: sessionId,
+      userMessage: message,
+      assistantMessage: groundedReply,
+    );
+
+    return groundedReply;
+  }
+
+  Future<void> _persistTurn({
+    required String businessId,
+    required String userId,
+    required String sessionId,
+    required String userMessage,
+    required String assistantMessage,
+  }) async {
     await _client.from('ai_conversations').insert([
       {
         'business_id': businessId,
-        'user_id': user.id,
+        'user_id': userId,
         'session_id': sessionId,
         'role': 'user',
-        'message': message,
+        'message': userMessage,
       },
       {
         'business_id': businessId,
-        'user_id': user.id,
+        'user_id': userId,
         'session_id': sessionId,
         'role': 'assistant',
-        'message': groundedReply,
+        'message': assistantMessage,
       },
     ]);
+  }
 
-    return groundedReply;
+  Future<String?> _callGeminiApi({
+    required String apiKey,
+    required String message,
+    Business? business,
+    FinancialMetric? currentMetrics,
+    Alert? alertContext,
+    List<Alert>? activeAlerts,
+    List<Transaction>? recentTransactions,
+  }) async {
+    final url = Uri.parse(
+      'https://generativelanguage.googleapis.com/v1beta/models/gemini-flash-lite-latest:generateContent?key=$apiKey',
+    );
+
+    final client = HttpClient();
+    try {
+      final request = await client.postUrl(url);
+      request.headers.set('Content-Type', 'application/json');
+
+      final contextMap = {
+        'business': {
+          'name': business?.name ?? 'Business',
+          'industry': business?.industry ?? 'General',
+          'currency': business?.currency ?? 'USD',
+        },
+        'metrics': currentMetrics != null
+            ? {
+                'revenue': currentMetrics.revenue,
+                'expenses': currentMetrics.expenses,
+                'profit': currentMetrics.profit,
+                'profit_margin': '${currentMetrics.profitMargin.toStringAsFixed(1)}%',
+                'net_cash_flow': currentMetrics.netCashFlow,
+                'receivables': currentMetrics.receivables,
+                'payables': currentMetrics.payables,
+                'health_score': currentMetrics.healthScore,
+              }
+            : 'No metrics yet',
+        'focused_signal': alertContext != null
+            ? {
+                'title': alertContext.title,
+                'description': alertContext.description,
+                'recommendation': alertContext.recommendation,
+              }
+            : null,
+      };
+
+      const systemPrompt =
+          'You are Finora AI CFO, an executive financial advisor for small businesses. '
+          'Provide clear, factual, structured recommendations (What Happened, Why It Matters, What I Recommend) '
+          'based on the real financial metrics provided without inventing fake numbers.';
+
+      final payload = jsonEncode({
+        'system_instruction': {
+          'parts': [
+            {'text': systemPrompt}
+          ]
+        },
+        'contents': [
+          {
+            'role': 'user',
+            'parts': [
+              {
+                'text':
+                    'Financial Context:\n${jsonEncode(contextMap)}\n\nQuestion:\n$message'
+              }
+            ]
+          }
+        ]
+      });
+
+      request.write(payload);
+      final response = await request.close();
+      if (response.statusCode == 200) {
+        final responseBody = await response.transform(utf8.decoder).join();
+        final parsed = jsonDecode(responseBody) as Map<String, dynamic>;
+        final candidates = parsed['candidates'] as List<dynamic>?;
+        if (candidates != null && candidates.isNotEmpty) {
+          final parts = candidates[0]['content']['parts'] as List<dynamic>?;
+          if (parts != null && parts.isNotEmpty) {
+            return parts[0]['text'] as String?;
+          }
+        }
+      }
+      return null;
+    } finally {
+      client.close();
+    }
   }
 
   /// Clears a conversation session.

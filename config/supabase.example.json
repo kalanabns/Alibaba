@@ -1,4 +1,5 @@
 {
-  "SUPABASE_URL": "https://your-project-ref.supabase.co",
-  "SUPABASE_PUBLISHABLE_KEY": "sb_publishable_your_key"
+  "SUPABASE_URL": "https://your-project.supabase.co",
+  "SUPABASE_PUBLISHABLE_KEY": "your-publishable-key",
+  "GEMINI_API_KEY": "your-gemini-api-key"
 }
