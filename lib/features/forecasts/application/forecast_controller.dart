@@ -1,6 +1,7 @@
 import 'package:flutter/foundation.dart';
 import '../../financial_health/domain/financial_engine.dart';
 import '../data/forecast_repository.dart';
+import '../domain/forecast.dart';
 import '../domain/forecast_engine.dart';
 
 class ForecastController extends ChangeNotifier {
@@ -16,6 +17,14 @@ class ForecastController extends ChangeNotifier {
   bool get isLoading => _isLoading;
   String? get errorMessage => _errorMessage;
   ForecastEvaluation get evaluation => _evaluation;
+  List<Forecast> get forecasts => _evaluation.forecasts;
+
+  /// Injects memory-only forecast evaluation for safe demo mode.
+  void loadInMemoryEvaluation(ForecastEvaluation evaluation) {
+    _evaluation = evaluation;
+    _errorMessage = null;
+    notifyListeners();
+  }
 
   /// Runs deterministic forecasting engine against historical monthly buckets
   /// and persists forecast predictions into Supabase.

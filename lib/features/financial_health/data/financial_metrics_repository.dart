@@ -3,9 +3,10 @@ import '../domain/financial_metric.dart';
 
 class FinancialMetricsRepository {
   FinancialMetricsRepository({SupabaseClient? client})
-    : _client = client ?? Supabase.instance.client;
+    : _injectedClient = client;
 
-  final SupabaseClient _client;
+  final SupabaseClient? _injectedClient;
+  SupabaseClient get _client => _injectedClient ?? Supabase.instance.client;
 
   Future<FinancialMetric?> getLatestMetric(String businessId) async {
     try {

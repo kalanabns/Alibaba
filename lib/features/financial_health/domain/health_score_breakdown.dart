@@ -50,4 +50,12 @@ class HealthScoreBreakdown {
     expenseControl,
     workingCapital,
   ];
+
+  /// The component performing best relative to its maximum score.
+  HealthScoreComponent get strongestFactor =>
+      components.reduce((a, b) => a.percentage >= b.percentage ? a : b);
+
+  /// The component most in need of operational attention or improvement.
+  HealthScoreComponent get weakestFactor =>
+      components.reduce((a, b) => a.percentage <= b.percentage ? a : b);
 }

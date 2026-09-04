@@ -4,13 +4,20 @@ import '../../../core/utilities/validators.dart';
 import '../../../shared/widgets/finora_error_view.dart';
 import '../../../shared/widgets/finora_primary_button.dart';
 import '../../../shared/widgets/finora_text_field.dart';
+import '../../businesses/application/business_controller.dart';
+import '../../businesses/data/demo_business_service.dart';
 import '../application/auth_controller.dart';
 import 'signup_screen.dart';
 
 class LoginScreen extends StatefulWidget {
-  const LoginScreen({super.key, required this.authController});
+  const LoginScreen({
+    super.key,
+    required this.authController,
+    this.businessController,
+  });
 
   final AuthController authController;
+  final BusinessController? businessController;
 
   @override
   State<LoginScreen> createState() => _LoginScreenState();
@@ -220,6 +227,44 @@ class _LoginScreenState extends State<LoginScreen> {
                                   ),
                                 ],
                               ),
+                                if (widget.businessController != null) ...[
+                                  const SizedBox(height: 16),
+                                  const Row(
+                                    children: [
+                                      Expanded(child: Divider()),
+                                      Padding(
+                                        padding: EdgeInsets.symmetric(horizontal: 8),
+                                        child: Text(
+                                          'HACKATHON EVALUATION',
+                                          style: TextStyle(
+                                            fontSize: 10,
+                                            color: AppTheme.textMuted,
+                                            fontWeight: FontWeight.bold,
+                                            letterSpacing: 0.5,
+                                          ),
+                                        ),
+                                      ),
+                                      Expanded(child: Divider()),
+                                    ],
+                                  ),
+                                  const SizedBox(height: 14),
+                                  OutlinedButton.icon(
+                                    onPressed: () {
+                                      final demo = DemoBusinessService.getDemoData();
+                                      widget.businessController!.loadDemoMode(demo.business);
+                                    },
+                                    icon: const Icon(Icons.science_outlined, size: 18, color: AppTheme.primaryNavy),
+                                    label: const Text('Explore Demo Workspace (Pacific Coast Roasters)'),
+                                    style: OutlinedButton.styleFrom(
+                                      foregroundColor: AppTheme.primaryNavy,
+                                      side: const BorderSide(color: AppTheme.primaryNavy),
+                                      padding: const EdgeInsets.symmetric(vertical: 12),
+                                      shape: RoundedRectangleBorder(
+                                        borderRadius: BorderRadius.circular(10),
+                                      ),
+                                    ),
+                                  ),
+                                ],
                             ],
                           ),
                         ),

@@ -8,6 +8,7 @@ class KpiMetricCard extends StatelessWidget {
     required this.title,
     required this.amount,
     required this.currency,
+    this.previousAmount,
     this.growth,
     this.subtitle,
     required this.icon,
@@ -18,6 +19,7 @@ class KpiMetricCard extends StatelessWidget {
   final String title;
   final double amount;
   final String currency;
+  final double? previousAmount;
   final double? growth;
   final String? subtitle;
   final IconData icon;

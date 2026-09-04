@@ -1,10 +1,10 @@
 import 'package:supabase_flutter/supabase_flutter.dart';
 
 class AuthRepository {
-  AuthRepository({SupabaseClient? client})
-    : _client = client ?? Supabase.instance.client;
+  AuthRepository({SupabaseClient? client}) : _injectedClient = client;
 
-  final SupabaseClient _client;
+  final SupabaseClient? _injectedClient;
+  SupabaseClient get _client => _injectedClient ?? Supabase.instance.client;
 
   User? get currentUser => _client.auth.currentUser;
 

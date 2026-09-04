@@ -1,5 +1,5 @@
-import 'dart:math';
 import 'package:flutter/foundation.dart';
+import '../../../core/utilities/uuid_generator.dart';
 import '../../alerts/domain/alert.dart';
 import '../../businesses/domain/business.dart';
 import '../../financial_health/domain/financial_metric.dart';
@@ -8,9 +8,11 @@ import '../data/ai_cfo_repository.dart';
 import '../domain/ai_conversation.dart';
 
 class AICFOController extends ChangeNotifier {
-  AICFOController({AICFORepository? repository})
+  AICFOController({AICFORepository? repository, String? sessionId})
     : _repository = repository ?? AICFORepository(),
-      _sessionId = _generateUniqueId();
+      _sessionId = (sessionId != null && UuidUtils.isValidUuid(sessionId))
+          ? sessionId
+          : UuidUtils.generate();
 
   final AICFORepository _repository;
 
@@ -28,10 +30,7 @@ class AICFOController extends ChangeNotifier {
   String? get errorMessage => _errorMessage;
   String? get cachedDashboardSummary => _cachedDashboardSummary;
 
-  static String _generateUniqueId() {
-    final rand = Random().nextInt(999999);
-    return 'sess_${DateTime.now().millisecondsSinceEpoch}_$rand';
-  }
+  static String _generateUniqueId() => UuidUtils.generate();
 
   /// Loads message history for the current or specified session.
   Future<void> loadHistory({
@@ -39,7 +38,11 @@ class AICFOController extends ChangeNotifier {
     String? sessionId,
   }) async {
     if (sessionId != null) {
-      _sessionId = sessionId;
+      _sessionId = UuidUtils.isValidUuid(sessionId)
+          ? sessionId
+          : UuidUtils.generate();
+    } else if (!UuidUtils.isValidUuid(_sessionId)) {
+      _sessionId = UuidUtils.generate();
     }
     _isLoading = true;
     _errorMessage = null;
@@ -71,8 +74,12 @@ class AICFOController extends ChangeNotifier {
     final trimmed = message.trim();
     if (trimmed.isEmpty) return;
 
+    if (!UuidUtils.isValidUuid(_sessionId)) {
+      _sessionId = UuidUtils.generate();
+    }
+
     final userMessage = AIConversation(
-      id: 'msg_user_${DateTime.now().millisecondsSinceEpoch}',
+      id: UuidUtils.generate(),
       businessId: businessId,
       userId: '',
       sessionId: _sessionId,
@@ -99,7 +106,7 @@ class AICFOController extends ChangeNotifier {
       );
 
       final assistantMessage = AIConversation(
-        id: 'msg_asst_${DateTime.now().millisecondsSinceEpoch}',
+        id: UuidUtils.generate(),
         businessId: businessId,
         userId: '',
         sessionId: _sessionId,

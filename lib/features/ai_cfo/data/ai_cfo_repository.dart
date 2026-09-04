@@ -1,6 +1,7 @@
 import 'dart:convert';
 import 'dart:io';
 import 'package:supabase_flutter/supabase_flutter.dart';
+import '../../../core/utilities/uuid_generator.dart';
 import '../../alerts/domain/alert.dart';
 import '../../businesses/domain/business.dart';
 import '../../financial_health/domain/financial_metric.dart';
@@ -18,6 +19,10 @@ class AICFORepository {
     required String businessId,
     required String sessionId,
   }) async {
+    if (!UuidUtils.isValidUuid(sessionId)) {
+      return [];
+    }
+
     final response = await _client
         .from('ai_conversations')
         .select()
@@ -48,6 +53,10 @@ class AICFORepository {
       throw StateError('User not authenticated.');
     }
 
+    final safeSessionId = UuidUtils.isValidUuid(sessionId)
+        ? sessionId
+        : UuidUtils.generate();
+
     // 1. Check if Gemini API key is supplied via --dart-define-from-file
     const geminiKey = String.fromEnvironment('GEMINI_API_KEY');
     if (geminiKey.isNotEmpty) {
@@ -66,7 +75,7 @@ class AICFORepository {
           await _persistTurn(
             businessId: businessId,
             userId: user.id,
-            sessionId: sessionId,
+            sessionId: safeSessionId,
             userMessage: message,
             assistantMessage: geminiReply,
           );
@@ -83,7 +92,7 @@ class AICFORepository {
         'ai-cfo',
         body: {
           'business_id': businessId,
-          'session_id': sessionId,
+          'session_id': safeSessionId,
           'message': message,
           if (alertContext != null)
             'alert_context': {
@@ -118,7 +127,7 @@ class AICFORepository {
     await _persistTurn(
       businessId: businessId,
       userId: user.id,
-      sessionId: sessionId,
+      sessionId: safeSessionId,
       userMessage: message,
       assistantMessage: groundedReply,
     );
@@ -133,18 +142,22 @@ class AICFORepository {
     required String userMessage,
     required String assistantMessage,
   }) async {
+    final validSessionId = UuidUtils.isValidUuid(sessionId)
+        ? sessionId
+        : UuidUtils.generate();
+
     await _client.from('ai_conversations').insert([
       {
         'business_id': businessId,
         'user_id': userId,
-        'session_id': sessionId,
+        'session_id': validSessionId,
         'role': 'user',
         'message': userMessage,
       },
       {
         'business_id': businessId,
         'user_id': userId,
-        'session_id': sessionId,
+        'session_id': validSessionId,
         'role': 'assistant',
         'message': assistantMessage,
       },
@@ -244,6 +257,7 @@ class AICFORepository {
     required String businessId,
     required String sessionId,
   }) async {
+    if (!UuidUtils.isValidUuid(sessionId)) return;
     await _client
         .from('ai_conversations')
         .delete()
@@ -258,91 +272,232 @@ class AICFORepository {
     Business? business,
   }) {
     final bName = business?.name ?? 'your business';
+    final currency = business?.currency ?? 'USD';
     final lowerMsg = message.toLowerCase();
 
+    // 0. Insufficient Data Check
+    if (metric == null || (metric.revenue == 0 && metric.expenses == 0)) {
+      return '''### What Happened
+$bName workspace has insufficient financial history to compute accurate performance trends or forward forecasts.
+
+### Why It Matters
+Reliable financial decisions require actual transaction data to establish your baseline revenue, cost structure, and cash burn rate.
+
+### What I Recommend
+1. Import your recent bank or credit card CSV statements via the **Transactions** tab.
+2. Ensure at least 30 to 60 days of inflows and outflows are recorded.
+3. Review your starting cash balance in Business Settings.
+
+**Priority**: HIGH''';
+    }
+
+    // 1. Alert Context Explanation
     if (alert != null) {
       return '''### What Happened
 ${alert.description}
 
 ### Why It Matters
-This signal directly impacts operating cash flow and profit sustainability for $bName. When ${alert.title.toLowerCase()} persists, working capital becomes constrained.
+This signal directly impacts operating liquidity and profit stability for $bName. When ${alert.title.toLowerCase()} persists, working capital becomes constrained.
 
-### What I Recommend
+### Top Risks
+- Cash runway compression if collections lag behind disbursements.
+- Unplanned debt reliance or emergency liquidity borrowing.
+
+### Recommended Actions
 1. ${alert.recommendation ?? "Review your highest operating costs and renegotiate key supplier agreements."}
 2. Prioritize collecting overdue receivables before committing to new capital outlays.
 3. Review your weekly cash outflow schedule against expected customer payments.
 
-**Priority**: ${alert.severityLabel.toUpperCase()}''';
+### Expected Impact & Urgency
+- **Expected Impact**: Stabilizes monthly operating cash flow by reducing immediate burn.
+- **Priority / Urgency**: ${alert.severityLabel.toUpperCase()}''';
     }
 
+    // 2. Hiring & Headcount Affordability
+    if (lowerMsg.contains('hire') ||
+        lowerMsg.contains('staff') ||
+        lowerMsg.contains('employee') ||
+        lowerMsg.contains('headcount') ||
+        lowerMsg.contains('payroll')) {
+      final monthlyProfit = metric.profit;
+      final monthlyCash = metric.netCashFlow;
+      final canAfford = monthlyProfit > 3000 && monthlyCash > 2000;
+
+      return '''### What Happened
+$bName currently generates **\$$currency ${metric.profit.toStringAsFixed(2)}** in monthly profit and **\$$currency ${metric.netCashFlow.toStringAsFixed(2)}** in net cash flow, with a composite Health Score of **${metric.healthScore?.toStringAsFixed(0) ?? "0"}/100**.
+
+### Why It Matters
+Adding new fixed payroll increases your monthly break-even threshold regardless of revenue volatility. A safe hiring decision requires at least 3-6 months of payroll reserve plus consistent positive operating cash flow.
+
+### Top Risks
+- New staff fixed expense could flip monthly cash flow into a deficit if sales fluctuate.
+- Slower onboarding velocity delaying revenue contribution.
+
+### Recommended Actions
+1. ${canAfford ? "Your current cash flow supports a cautious hire. Set a strict total compensation ceiling (salary + taxes + benefits)." : "Delay full-time hiring until operating profit and cash collections consistently exceed \$3,000/mo."}
+2. Run a scenario in the **What-If Simulator** (+Hire Staff) to model the exact margin impact.
+3. Consider contract or milestone-based talent first to protect baseline cash flow.
+
+### Expected Impact & Urgency
+- **Expected Impact**: Preserves liquidity while verifying revenue payback period.
+- **Priority**: ${canAfford ? "MEDIUM" : "HIGH"}''';
+    }
+
+    // 3. Forward Cash & Forecast Questions
+    if (lowerMsg.contains('next month') ||
+        lowerMsg.contains('forecast') ||
+        lowerMsg.contains('runway') ||
+        lowerMsg.contains('future cash') ||
+        lowerMsg.contains('how much cash')) {
+      final cashFlow = metric.netCashFlow;
+      final isPositive = cashFlow >= 0;
+
+      return '''### What Happened
+Historical net operating cash flow is running at **${isPositive ? "+" : ""}\$$currency ${cashFlow.toStringAsFixed(2)}** per month. Total receivables waiting to be collected stand at **\$$currency ${metric.receivables.toStringAsFixed(2)}**.
+
+### Why It Matters
+Forward cash stability depends on maintaining positive operating cash flow and accelerating the velocity of invoice collections.
+
+### Top Risks
+- Delayed customer payments postponing expected cash receipts into subsequent periods.
+- Lump-sum annual software or insurance renewals creating short-term liquidity dips.
+
+### Recommended Actions
+1. Review your 3-Month Projection in the **Forecasts** tab to examine best/worst-case cash trajectory.
+2. Follow up on the **\$$currency ${metric.receivables.toStringAsFixed(2)}** in pending invoices to secure immediate cash inflows.
+3. Establish a rolling 13-week cash flow calendar to monitor weekly disbursement timing.
+
+### Expected Impact & Urgency
+- **Expected Impact**: Protects operating buffer and prevents unexpected working capital shortfalls.
+- **Priority**: ${isPositive ? "MEDIUM" : "HIGH"}''';
+    }
+
+    // 4. Price Increase / What-If Scenario Questions
+    if (lowerMsg.contains('increase price') ||
+        lowerMsg.contains('pricing') ||
+        lowerMsg.contains('what if') ||
+        lowerMsg.contains('price increase') ||
+        lowerMsg.contains('5%') ||
+        lowerMsg.contains('10%')) {
+      final rev = metric.revenue;
+      final fivePercentGain = rev * 0.05;
+
+      return '''### What Happened
+$bName recorded **\$$currency ${rev.toStringAsFixed(2)}** in baseline revenue with a profit margin of **${metric.profitMargin.toStringAsFixed(1)}%**. A 5% price adjustment would generate approximately **+\$$currency ${fivePercentGain.toStringAsFixed(2)}** in direct gross profit.
+
+### Why It Matters
+Because fixed operating costs remain constant, pricing power flows directly to bottom-line net profit and cash flow expansion.
+
+### Top Risks
+- Potential client churn if price increases are not paired with clear value communication.
+- Competitor undercutting on standard service tiers.
+
+### Recommended Actions
+1. Model this scenario in the **What-If Simulator** to project exact margin expansion.
+2. Roll out price revisions selectively to new client proposals before adjusting existing contracts.
+3. Grandfather top long-term accounts on 12-month retainers to lock in predictable baseline revenue.
+
+### Expected Impact & Urgency
+- **Expected Impact**: Expands net profit margin by ~${(fivePercentGain / (rev > 0 ? rev : 1) * 100).toStringAsFixed(1)}% with zero additional overhead.
+- **Priority**: MEDIUM''';
+    }
+
+    // 5. Risks & Vulnerabilities
     if (lowerMsg.contains('risk') ||
         lowerMsg.contains('danger') ||
-        lowerMsg.contains('concern')) {
-      if (metric != null) {
-        final isLoss = metric.profit < 0;
-        final isNegativeCash = metric.netCashFlow < 0;
-        return '''### What Happened
-$bName is operating with a Financial Health Score of **${metric.healthScore?.toStringAsFixed(0) ?? "0"}/100**. ${isLoss ? "Current net loss is -\$${(-metric.profit).toStringAsFixed(2)}." : "Net profit is \$${metric.profit.toStringAsFixed(2)}."} ${isNegativeCash ? "Net cash burn is -\$${(-metric.netCashFlow).toStringAsFixed(2)}." : "Positive cash flow is \$${metric.netCashFlow.toStringAsFixed(2)}."}
+        lowerMsg.contains('concern') ||
+        lowerMsg.contains('threat')) {
+      final isLoss = metric.profit < 0;
+      final isNegativeCash = metric.netCashFlow < 0;
+
+      return '''### What Happened
+$bName is operating with a Financial Health Score of **${metric.healthScore?.toStringAsFixed(0) ?? "0"}/100**. ${isLoss ? "Current net loss is -\$$currency ${(-metric.profit).toStringAsFixed(2)}." : "Net profit is \$$currency ${metric.profit.toStringAsFixed(2)}."} ${isNegativeCash ? "Net cash burn is -\$$currency ${(-metric.netCashFlow).toStringAsFixed(2)}." : "Operating cash flow is +\$$currency ${metric.netCashFlow.toStringAsFixed(2)}."}
 
 ### Why It Matters
-${isNegativeCash ? "Cash outflow is exceeding cash inflow, which will deplete reserves if uncorrected." : "Operating margins require active oversight against rising vendor overhead."}
+${isNegativeCash ? "Cash disbursements are outpacing collections, which will erode your liquid cash buffer if unchecked." : "Operating margins require active defense against compounding overhead and delayed receivables."}
 
-### What I Recommend
-1. Accelerate recovery of the **\$${metric.receivables.toStringAsFixed(2)}** in pending customer receivables.
-2. Conduct an immediate audit of recurring software subscriptions and overhead retainers.
-3. Delay discretionary equipment or non-essential spending until net cash flow stabilizes.
+### Top Risks
+- Cash runway contraction if revenue contracts while fixed costs remain elevated.
+- Overdue customer invoices turning into bad debt write-offs.
 
-**Priority**: ${isLoss || isNegativeCash ? "HIGH" : "MEDIUM"}''';
-      }
+### Recommended Actions
+1. Accelerate collection of the **\$$currency ${metric.receivables.toStringAsFixed(2)}** in outstanding customer receivables.
+2. Conduct an immediate audit of recurring vendor subscriptions and discretionary retainers.
+3. Delay capital-intensive disbursements until monthly cash flow is solidly positive.
+
+### Expected Impact & Urgency
+- **Expected Impact**: Halts cash drainage and rebuilds working capital reserves.
+- **Priority**: ${isLoss || isNegativeCash ? "CRITICAL" : "HIGH"}''';
     }
 
+    // 6. Expense Optimization & Spending
     if (lowerMsg.contains('reduce') ||
         lowerMsg.contains('expense') ||
-        lowerMsg.contains('cost')) {
+        lowerMsg.contains('spend') ||
+        lowerMsg.contains('cost') ||
+        lowerMsg.contains('overhead')) {
       return '''### What Happened
-Total operating expenses for this period are **\$${metric?.expenses.toStringAsFixed(2) ?? "0.00"}**, with an expense growth rate of **${metric?.expenseGrowth.toStringAsFixed(1) ?? "0.0"}%**.
+Total operating expenses for this period are **\$$currency ${metric.expenses.toStringAsFixed(2)}**, with an expense growth rate of **${metric.expenseGrowth.toStringAsFixed(1)}%** vs prior period.
 
 ### Why It Matters
-Eliminating unnecessary overhead directly expands net profit margin without requiring immediate sales growth.
+Pruning discretionary overhead immediately widens your operating margin without demanding costly sales cycles.
 
-### What I Recommend
-1. Review your top 3 largest expense categories to identify renegotiation targets.
-2. Audit recurring SaaS licenses, subscriptions, and retainers to remove inactive seats.
-3. Establish a pre-approval requirement for non-budgeted expenses exceeding \$250.
+### Top Risks
+- Creeping subscription overhead compounding unnoticed month-over-month.
+- Vendor price escalations going unreviewed.
 
-**Priority**: MEDIUM''';
+### Recommended Actions
+1. Audit your top 3 largest expense categories in the **Transactions** tab to renegotiate vendor rates.
+2. Cancel inactive software licenses, duplicate tools, and unused recurring memberships.
+3. Require pre-approval for discretionary purchases above \$250.
+
+### Expected Impact & Urgency
+- **Expected Impact**: Trims monthly operating overhead by 5-15%, directly boosting cash reserves.
+- **Priority**: HIGH''';
     }
 
+    // 7. Revenue Opportunities & Growth
     if (lowerMsg.contains('opportunity') ||
         lowerMsg.contains('grow') ||
         lowerMsg.contains('increase') ||
-        lowerMsg.contains('margin')) {
+        lowerMsg.contains('margin') ||
+        lowerMsg.contains('profit')) {
       return '''### What Happened
-$bName generated **\$${metric?.revenue.toStringAsFixed(2) ?? "0.00"}** in revenue with a profit margin of **${metric?.profitMargin.toStringAsFixed(1) ?? "0.0"}%**.
+$bName generated **\$$currency ${metric.revenue.toStringAsFixed(2)}** in revenue with a profit margin of **${metric.profitMargin.toStringAsFixed(1)}%**.
 
 ### Why It Matters
-Focusing on your most profitable revenue drivers and accelerating invoice collections compounds free cash flow.
+Focusing on high-margin offerings while accelerating invoice payment terms compounds your cash conversion velocity.
 
-### What I Recommend
-1. Re-engage past high-margin clients with personalized follow-up proposals.
-2. Offer 2% early-settlement discounts for customer invoices paid within 7 days.
-3. Prioritize marketing allocation toward your highest-performing sales channels.
+### Top Risks
+- Over-allocating time and resources to low-margin or slow-paying customer accounts.
 
-**Priority**: MEDIUM''';
+### Recommended Actions
+1. Re-engage past high-value clients with tailored expansion or retainer proposals.
+2. Offer 2% early-payment discounts for invoices settled within 7 days.
+3. Double down on your most profitable customer segment based on transaction history.
+
+### Expected Impact & Urgency
+- **Expected Impact**: Accelerates cash inflow timing and elevates composite health score.
+- **Priority**: MEDIUM''';
     }
 
-    // Default overview
+    // 8. General Performance & Default Executive Brief
     return '''### What Happened
-$bName recorded **\$${metric?.revenue.toStringAsFixed(2) ?? "0.00"}** in revenue and **\$${metric?.expenses.toStringAsFixed(2) ?? "0.00"}** in expenses, resulting in net profit of **\$${metric?.profit.toStringAsFixed(2) ?? "0.00"}** (Margin: **${metric?.profitMargin.toStringAsFixed(1) ?? "0.0"}%**). Your composite Financial Health Score is **${metric?.healthScore?.toStringAsFixed(0) ?? "0"}/100**.
+$bName recorded **\$$currency ${metric.revenue.toStringAsFixed(2)}** in revenue and **\$$currency ${metric.expenses.toStringAsFixed(2)}** in expenses, delivering a net profit of **\$$currency ${metric.profit.toStringAsFixed(2)}** (Margin: **${metric.profitMargin.toStringAsFixed(1)}%**). Your composite Financial Health Score is **${metric.healthScore?.toStringAsFixed(0) ?? "0"}/100**.
 
 ### Why It Matters
-${(metric?.profit ?? 0) >= 0 ? "Your business is operating profitably, providing cash cushion for measured expansion." : "Operating expenses exceed current revenues, placing short-term pressure on cash reserves."}
+${metric.profit >= 0 ? "Core operations are profitable, providing stability to support reinvestment." : "Operating expenses exceed current revenue, creating pressure on working capital."}
 
-### What I Recommend
-1. ${metric != null && metric.receivables > 0 ? "Focus on collecting the \$${metric.receivables.toStringAsFixed(2)} in outstanding customer invoices." : "Maintain disciplined oversight of weekly operating cash outflows."}
-2. Maintain a 3-month operating cash buffer for unforeseen business fluctuations.
-3. Review active alerts in the Signals tab to address emerging bottlenecks.
+### Top Risks
+- ${metric.receivables > 0 ? "Uncollected receivables (\$${metric.receivables.toStringAsFixed(2)}) delaying working capital availability." : "Managing monthly fixed overhead against seasonal revenue fluctuations."}
 
-**Priority**: ${(metric?.healthScore ?? 100) < 60 ? "HIGH" : "MEDIUM"}''';
+### Recommended Actions
+1. ${metric.receivables > 0 ? "Follow up on outstanding customer payments to convert invoiced revenue to liquid cash." : "Maintain strict oversight on recurring monthly operating overhead."}
+2. Maintain a 3-month operating cash cushion for unexpected contingencies.
+3. Review active alerts in the **Action Center** to address identified bottlenecks.
+
+### Expected Impact & Urgency
+- **Expected Impact**: Protects core profitability and strengthens overall business financial resilience.
+- **Priority**: ${metric.profit < 0 ? "HIGH" : "MEDIUM"}''';
   }
 }
