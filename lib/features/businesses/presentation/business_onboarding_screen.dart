@@ -131,161 +131,221 @@ class _BusinessOnboardingScreenState extends State<BusinessOnboardingScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: AppTheme.backgroundColor,
-      appBar: AppBar(title: const Text('Set Up Your Business')),
+      backgroundColor: AppTheme.background,
+      appBar: AppBar(title: const Text('Set Up Your Business Profile')),
       body: SafeArea(
-        child: SingleChildScrollView(
-          padding: const EdgeInsets.all(24.0),
-          child: ListenableBuilder(
-            listenable: widget.businessController,
-            builder: (context, _) {
-              final isSubmitting = widget.businessController.isSubmitting;
-              final errorMessage = widget.businessController.errorMessage;
+        child: Center(
+          child: SingleChildScrollView(
+            padding: const EdgeInsets.symmetric(
+              horizontal: 24.0,
+              vertical: 28.0,
+            ),
+            child: ConstrainedBox(
+              constraints: const BoxConstraints(maxWidth: 580),
+              child: ListenableBuilder(
+                listenable: widget.businessController,
+                builder: (context, _) {
+                  final isSubmitting = widget.businessController.isSubmitting;
+                  final errorMessage = widget.businessController.errorMessage;
 
-              return Form(
-                key: _formKey,
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.stretch,
-                  children: [
-                    const Text(
-                      'Welcome to Finora AI',
-                      style: TextStyle(
-                        fontSize: 24,
-                        fontWeight: FontWeight.bold,
-                        color: AppTheme.textPrimary,
+                  return Container(
+                    padding: const EdgeInsets.all(28.0),
+                    decoration: BoxDecoration(
+                      color: AppTheme.surface,
+                      borderRadius: BorderRadius.circular(20),
+                      border: Border.all(color: AppTheme.borderColor),
+                      boxShadow: [
+                        BoxShadow(
+                          color: Colors.black.withValues(alpha: 0.04),
+                          blurRadius: 12,
+                          offset: const Offset(0, 4),
+                        ),
+                      ],
+                    ),
+                    child: Form(
+                      key: _formKey,
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.stretch,
+                        children: [
+                          Row(
+                            children: [
+                              Container(
+                                padding: const EdgeInsets.all(10),
+                                decoration: BoxDecoration(
+                                  color: AppTheme.primaryNavy,
+                                  borderRadius: BorderRadius.circular(12),
+                                ),
+                                child: const Icon(
+                                  Icons.store_rounded,
+                                  color: AppTheme.primaryLight,
+                                  size: 24,
+                                ),
+                              ),
+                              const SizedBox(width: 14),
+                              const Expanded(
+                                child: Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    Text(
+                                      'Establish Business Workspace',
+                                      style: TextStyle(
+                                        fontSize: 18,
+                                        fontWeight: FontWeight.bold,
+                                        color: AppTheme.textPrimary,
+                                      ),
+                                    ),
+                                    Text(
+                                      'Provide baseline parameters for your financial engine.',
+                                      style: TextStyle(
+                                        fontSize: 12,
+                                        color: AppTheme.textSecondary,
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              ),
+                            ],
+                          ),
+                          const SizedBox(height: 24),
+                          if (errorMessage != null) ...[
+                            FinoraErrorView(message: errorMessage),
+                            const SizedBox(height: 16),
+                          ],
+                          FinoraTextField(
+                            controller: _nameController,
+                            label: 'Business Name',
+                            hint: 'e.g. Apex Global Trade',
+                            prefixIcon: Icons.business_outlined,
+                            enabled: !isSubmitting,
+                            validator: (val) => Validators.validateRequired(
+                              val,
+                              'Business name',
+                            ),
+                          ),
+                          const SizedBox(height: 16),
+                          DropdownButtonFormField<String>(
+                            initialValue: _selectedIndustry,
+                            decoration: const InputDecoration(
+                              labelText: 'Industry Sector',
+                              prefixIcon: Icon(Icons.category_outlined),
+                            ),
+                            items: _industries
+                                .map(
+                                  (ind) => DropdownMenuItem(
+                                    value: ind,
+                                    child: Text(ind),
+                                  ),
+                                )
+                                .toList(),
+                            onChanged: isSubmitting
+                                ? null
+                                : (val) {
+                                    if (val != null) {
+                                      setState(() => _selectedIndustry = val);
+                                    }
+                                  },
+                          ),
+                          if (_selectedIndustry == 'Other') ...[
+                            const SizedBox(height: 16),
+                            FinoraTextField(
+                              controller: _otherIndustryController,
+                              label: 'Specify Industry',
+                              hint: 'e.g. Clean Energy Tech',
+                              enabled: !isSubmitting,
+                              validator: (val) =>
+                                  Validators.validateRequired(val, 'Industry'),
+                            ),
+                          ],
+                          const SizedBox(height: 16),
+                          DropdownButtonFormField<String>(
+                            initialValue: _selectedCountry,
+                            decoration: const InputDecoration(
+                              labelText: 'Operating Country',
+                              prefixIcon: Icon(Icons.public_outlined),
+                            ),
+                            items: _countryCurrencyMap.keys
+                                .map(
+                                  (c) => DropdownMenuItem(
+                                    value: c,
+                                    child: Text(c),
+                                  ),
+                                )
+                                .toList(),
+                            onChanged: isSubmitting ? null : _onCountryChanged,
+                          ),
+                          const SizedBox(height: 16),
+                          DropdownButtonFormField<String>(
+                            initialValue: _selectedCurrency,
+                            decoration: const InputDecoration(
+                              labelText: 'Base Currency (ISO)',
+                              prefixIcon: Icon(Icons.monetization_on_outlined),
+                            ),
+                            items: _currencies
+                                .map(
+                                  (cur) => DropdownMenuItem(
+                                    value: cur,
+                                    child: Text(cur),
+                                  ),
+                                )
+                                .toList(),
+                            onChanged: isSubmitting
+                                ? null
+                                : (val) {
+                                    if (val != null) {
+                                      setState(() => _selectedCurrency = val);
+                                    }
+                                  },
+                          ),
+                          const SizedBox(height: 16),
+                          DropdownButtonFormField<String>(
+                            initialValue: _selectedFiscalMonth,
+                            decoration: const InputDecoration(
+                              labelText: 'Fiscal Year Start Month',
+                              prefixIcon: Icon(Icons.calendar_month_outlined),
+                            ),
+                            items: _months
+                                .map(
+                                  (m) => DropdownMenuItem(
+                                    value: m,
+                                    child: Text(m),
+                                  ),
+                                )
+                                .toList(),
+                            onChanged: isSubmitting
+                                ? null
+                                : (val) {
+                                    if (val != null) {
+                                      setState(
+                                        () => _selectedFiscalMonth = val,
+                                      );
+                                    }
+                                  },
+                          ),
+                          const SizedBox(height: 16),
+                          FinoraTextField(
+                            controller: _startingCashController,
+                            label: 'Starting Cash Balance',
+                            hint: '0.00',
+                            keyboardType: const TextInputType.numberWithOptions(
+                              decimal: true,
+                            ),
+                            prefixIcon: Icons.account_balance_outlined,
+                            enabled: !isSubmitting,
+                            validator: Validators.validateStartingCash,
+                          ),
+                          const SizedBox(height: 28),
+                          FinoraPrimaryButton(
+                            text: 'Create Business & Launch Dashboard',
+                            isLoading: isSubmitting,
+                            onPressed: _handleSubmit,
+                          ),
+                        ],
                       ),
                     ),
-                    const SizedBox(height: 8),
-                    const Text(
-                      'Tell us about your business to establish your financial health workspace.',
-                      style: TextStyle(
-                        fontSize: 14,
-                        color: AppTheme.textSecondary,
-                      ),
-                    ),
-                    const SizedBox(height: 24),
-                    if (errorMessage != null) ...[
-                      FinoraErrorView(message: errorMessage),
-                      const SizedBox(height: 20),
-                    ],
-                    FinoraTextField(
-                      controller: _nameController,
-                      label: 'Business Name',
-                      hint: 'e.g. BrightWave Solutions',
-                      prefixIcon: Icons.business_outlined,
-                      enabled: !isSubmitting,
-                      validator: (val) =>
-                          Validators.validateRequired(val, 'Business name'),
-                    ),
-                    const SizedBox(height: 16),
-                    DropdownButtonFormField<String>(
-                      initialValue: _selectedIndustry,
-                      decoration: const InputDecoration(
-                        labelText: 'Industry Sector',
-                        prefixIcon: Icon(Icons.category_outlined),
-                      ),
-                      items: _industries
-                          .map(
-                            (ind) =>
-                                DropdownMenuItem(value: ind, child: Text(ind)),
-                          )
-                          .toList(),
-                      onChanged: isSubmitting
-                          ? null
-                          : (val) {
-                              if (val != null) {
-                                setState(() => _selectedIndustry = val);
-                              }
-                            },
-                    ),
-                    if (_selectedIndustry == 'Other') ...[
-                      const SizedBox(height: 16),
-                      FinoraTextField(
-                        controller: _otherIndustryController,
-                        label: 'Specify Industry',
-                        hint: 'e.g. Clean Energy Tech',
-                        enabled: !isSubmitting,
-                        validator: (val) =>
-                            Validators.validateRequired(val, 'Industry'),
-                      ),
-                    ],
-                    const SizedBox(height: 16),
-                    DropdownButtonFormField<String>(
-                      initialValue: _selectedCountry,
-                      decoration: const InputDecoration(
-                        labelText: 'Operating Country',
-                        prefixIcon: Icon(Icons.public_outlined),
-                      ),
-                      items: _countryCurrencyMap.keys
-                          .map(
-                            (c) => DropdownMenuItem(value: c, child: Text(c)),
-                          )
-                          .toList(),
-                      onChanged: isSubmitting ? null : _onCountryChanged,
-                    ),
-                    const SizedBox(height: 16),
-                    DropdownButtonFormField<String>(
-                      initialValue: _selectedCurrency,
-                      decoration: const InputDecoration(
-                        labelText: 'Base Currency (ISO)',
-                        prefixIcon: Icon(Icons.monetization_on_outlined),
-                      ),
-                      items: _currencies
-                          .map(
-                            (cur) =>
-                                DropdownMenuItem(value: cur, child: Text(cur)),
-                          )
-                          .toList(),
-                      onChanged: isSubmitting
-                          ? null
-                          : (val) {
-                              if (val != null) {
-                                setState(() => _selectedCurrency = val);
-                              }
-                            },
-                    ),
-                    const SizedBox(height: 16),
-                    DropdownButtonFormField<String>(
-                      initialValue: _selectedFiscalMonth,
-                      decoration: const InputDecoration(
-                        labelText: 'Fiscal Year Start Month',
-                        prefixIcon: Icon(Icons.calendar_month_outlined),
-                      ),
-                      items: _months
-                          .map(
-                            (m) => DropdownMenuItem(value: m, child: Text(m)),
-                          )
-                          .toList(),
-                      onChanged: isSubmitting
-                          ? null
-                          : (val) {
-                              if (val != null) {
-                                setState(() => _selectedFiscalMonth = val);
-                              }
-                            },
-                    ),
-                    const SizedBox(height: 16),
-                    FinoraTextField(
-                      controller: _startingCashController,
-                      label: 'Starting Cash Balance',
-                      hint: '0.00',
-                      keyboardType: const TextInputType.numberWithOptions(
-                        decimal: true,
-                      ),
-                      prefixIcon: Icons.account_balance_outlined,
-                      enabled: !isSubmitting,
-                      validator: Validators.validateStartingCash,
-                    ),
-                    const SizedBox(height: 28),
-                    FinoraPrimaryButton(
-                      text: 'Complete Setup & Enter Workspace',
-                      isLoading: isSubmitting,
-                      onPressed: _handleSubmit,
-                    ),
-                  ],
-                ),
-              );
-            },
+                  );
+                },
+              ),
+            ),
           ),
         ),
       ),

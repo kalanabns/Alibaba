@@ -41,108 +41,193 @@ class _LoginScreenState extends State<LoginScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: AppTheme.backgroundColor,
+      backgroundColor: AppTheme.background,
       body: SafeArea(
         child: Center(
           child: SingleChildScrollView(
-            padding: const EdgeInsets.all(24.0),
-            child: ListenableBuilder(
-              listenable: widget.authController,
-              builder: (context, _) {
-                final isLoading = widget.authController.isLoading;
-                final errorMessage = widget.authController.errorMessage;
+            padding: const EdgeInsets.symmetric(
+              horizontal: 24.0,
+              vertical: 32.0,
+            ),
+            child: ConstrainedBox(
+              constraints: const BoxConstraints(maxWidth: 440),
+              child: ListenableBuilder(
+                listenable: widget.authController,
+                builder: (context, _) {
+                  final isLoading = widget.authController.isLoading;
+                  final errorMessage = widget.authController.errorMessage;
 
-                return Form(
-                  key: _formKey,
-                  child: Column(
+                  return Column(
                     mainAxisAlignment: MainAxisAlignment.center,
                     crossAxisAlignment: CrossAxisAlignment.stretch,
                     children: [
-                      const Icon(
-                        Icons.account_balance_wallet,
-                        size: 56,
-                        color: AppTheme.primaryColor,
-                      ),
-                      const SizedBox(height: 16),
-                      const Text(
-                        'Finora AI',
-                        textAlign: TextAlign.center,
-                        style: TextStyle(
-                          fontSize: 28,
-                          fontWeight: FontWeight.bold,
-                          color: AppTheme.textPrimary,
+                      // Navy Accent Brand Card
+                      Container(
+                        padding: const EdgeInsets.symmetric(
+                          vertical: 24,
+                          horizontal: 20,
                         ),
-                      ),
-                      const SizedBox(height: 8),
-                      const Text(
-                        'AI-Powered Financial Health Advisor',
-                        textAlign: TextAlign.center,
-                        style: TextStyle(
-                          fontSize: 14,
-                          color: AppTheme.textSecondary,
-                        ),
-                      ),
-                      const SizedBox(height: 32),
-                      if (errorMessage != null) ...[
-                        FinoraErrorView(
-                          message: errorMessage,
-                          onRetry: widget.authController.clearError,
-                        ),
-                        const SizedBox(height: 20),
-                      ],
-                      FinoraTextField(
-                        controller: _emailController,
-                        label: 'Business Email',
-                        hint: 'owner@business.com',
-                        keyboardType: TextInputType.emailAddress,
-                        prefixIcon: Icons.email_outlined,
-                        enabled: !isLoading,
-                        validator: Validators.validateEmail,
-                      ),
-                      const SizedBox(height: 16),
-                      FinoraTextField(
-                        controller: _passwordController,
-                        label: 'Password',
-                        obscureText: true,
-                        prefixIcon: Icons.lock_outlined,
-                        enabled: !isLoading,
-                        validator: Validators.validatePassword,
-                      ),
-                      const SizedBox(height: 24),
-                      FinoraPrimaryButton(
-                        text: 'Log In',
-                        isLoading: isLoading,
-                        onPressed: _handleLogin,
-                      ),
-                      const SizedBox(height: 16),
-                      Row(
-                        mainAxisAlignment: MainAxisAlignment.center,
-                        children: [
-                          const Text(
-                            "Don't have an account?",
-                            style: TextStyle(color: AppTheme.textSecondary),
+                        decoration: BoxDecoration(
+                          color: AppTheme.primaryNavy,
+                          borderRadius: const BorderRadius.vertical(
+                            top: Radius.circular(20),
                           ),
-                          TextButton(
-                            onPressed: isLoading
-                                ? null
-                                : () {
-                                    widget.authController.clearError();
-                                    Navigator.of(context).push(
-                                      MaterialPageRoute(
-                                        builder: (_) => SignUpScreen(
-                                          authController: widget.authController,
-                                        ),
-                                      ),
-                                    );
-                                  },
-                            child: const Text('Sign Up'),
+                          boxShadow: [
+                            BoxShadow(
+                              color: AppTheme.primaryNavy.withValues(
+                                alpha: 0.12,
+                              ),
+                              blurRadius: 16,
+                              offset: const Offset(0, 4),
+                            ),
+                          ],
+                        ),
+                        child: Column(
+                          children: [
+                            Container(
+                              padding: const EdgeInsets.all(12),
+                              decoration: BoxDecoration(
+                                color: AppTheme.primaryLight.withValues(
+                                  alpha: 0.15,
+                                ),
+                                shape: BoxShape.circle,
+                              ),
+                              child: const Icon(
+                                Icons.account_balance_wallet_rounded,
+                                size: 36,
+                                color: AppTheme.primaryLight,
+                              ),
+                            ),
+                            const SizedBox(height: 12),
+                            const Text(
+                              'Finora AI',
+                              style: TextStyle(
+                                fontSize: 24,
+                                fontWeight: FontWeight.bold,
+                                color: Colors.white,
+                                letterSpacing: -0.3,
+                              ),
+                            ),
+                            const SizedBox(height: 4),
+                            const Text(
+                              'AI-Powered Financial Health & Advisory',
+                              textAlign: TextAlign.center,
+                              style: TextStyle(
+                                fontSize: 13,
+                                color: Color(0xFF94A3B8),
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+
+                      // Crisp White Form Container (60% Light Body)
+                      Container(
+                        padding: const EdgeInsets.all(28.0),
+                        decoration: BoxDecoration(
+                          color: AppTheme.surface,
+                          borderRadius: const BorderRadius.vertical(
+                            bottom: Radius.circular(20),
                           ),
-                        ],
+                          border: Border.all(color: AppTheme.borderColor),
+                          boxShadow: [
+                            BoxShadow(
+                              color: Colors.black.withValues(alpha: 0.04),
+                              blurRadius: 12,
+                              offset: const Offset(0, 4),
+                            ),
+                          ],
+                        ),
+                        child: Form(
+                          key: _formKey,
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.stretch,
+                            children: [
+                              const Text(
+                                'Sign In to Your Workspace',
+                                style: TextStyle(
+                                  fontSize: 18,
+                                  fontWeight: FontWeight.bold,
+                                  color: AppTheme.textPrimary,
+                                ),
+                              ),
+                              const SizedBox(height: 6),
+                              const Text(
+                                'Access your financial ledger, metrics, and AI CFO.',
+                                style: TextStyle(
+                                  fontSize: 13,
+                                  color: AppTheme.textSecondary,
+                                ),
+                              ),
+                              const SizedBox(height: 24),
+                              if (errorMessage != null) ...[
+                                FinoraErrorView(
+                                  message: errorMessage,
+                                  onRetry: widget.authController.clearError,
+                                ),
+                                const SizedBox(height: 16),
+                              ],
+                              FinoraTextField(
+                                controller: _emailController,
+                                label: 'Business Email',
+                                hint: 'owner@business.com',
+                                keyboardType: TextInputType.emailAddress,
+                                prefixIcon: Icons.email_outlined,
+                                enabled: !isLoading,
+                                validator: Validators.validateEmail,
+                              ),
+                              const SizedBox(height: 16),
+                              FinoraTextField(
+                                controller: _passwordController,
+                                label: 'Password',
+                                obscureText: true,
+                                prefixIcon: Icons.lock_outlined,
+                                enabled: !isLoading,
+                                validator: Validators.validatePassword,
+                              ),
+                              const SizedBox(height: 24),
+                              FinoraPrimaryButton(
+                                text: 'Sign In',
+                                isLoading: isLoading,
+                                onPressed: _handleLogin,
+                              ),
+                              const SizedBox(height: 20),
+                              Row(
+                                mainAxisAlignment: MainAxisAlignment.center,
+                                children: [
+                                  const Text(
+                                    "Don't have an account?",
+                                    style: TextStyle(
+                                      color: AppTheme.textSecondary,
+                                      fontSize: 13,
+                                    ),
+                                  ),
+                                  TextButton(
+                                    onPressed: isLoading
+                                        ? null
+                                        : () {
+                                            widget.authController.clearError();
+                                            Navigator.of(context).push(
+                                              MaterialPageRoute(
+                                                builder: (_) => SignUpScreen(
+                                                  authController:
+                                                      widget.authController,
+                                                ),
+                                              ),
+                                            );
+                                          },
+                                    child: const Text('Create Account'),
+                                  ),
+                                ],
+                              ),
+                            ],
+                          ),
+                        ),
                       ),
                     ],
-                  ),
-                );
-              },
+                  );
+                },
+              ),
             ),
           ),
         ),

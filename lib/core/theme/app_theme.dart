@@ -3,46 +3,56 @@ import 'package:flutter/material.dart';
 class AppTheme {
   const AppTheme._();
 
-  // Premium Dark Fintech Color Palette
-  static const Color background = Color(0xFF08111F);
-  static const Color surface = Color(0xFF111C2E);
-  static const Color surfaceElevated = Color(0xFF162235);
-  static const Color surfaceCard = Color(0xFF18263A);
+  // 60% White / Light Foundation
+  static const Color background = Color(0xFFF8FAFC); // Light slate canvas
+  static const Color surface = Color(0xFFFFFFFF); // Pure white cards & dialogs
+  static const Color surfaceElevated = Color(0xFFF1F5F9); // Light neutral gray
+  static const Color surfaceCard = Color(0xFFFFFFFF);
 
-  static const Color primaryColor = Color(0xFF14B8A6); // Emerald / Teal
-  static const Color primaryLight = Color(0xFF2DD4BF);
-  static const Color primaryDark = Color(0xFF0F766E);
+  // 40% Navy & Teal Accents
+  static const Color primaryNavy = Color(0xFF0B1F33); // Deep Executive Navy
+  static const Color secondaryNavy = Color(0xFF163A59); // Slate Navy
+  static const Color primaryColor = Color(0xFF0D9488); // Deep Emerald / Teal
+  static const Color primaryLight = Color(0xFF14B8A6); // Vibrant Teal
+  static const Color primaryDark = Color(0xFF042F2E);
 
   static const Color accentColor = Color(0xFF10B981); // Emerald Positive
-  static const Color warningColor = Color(0xFFF59E0B); // Amber Warning
-  static const Color errorColor = Color(0xFFEF4444); // Coral Red
-  static const Color infoColor = Color(0xFF38BDF8); // Sky Blue
+  static const Color warningColor = Color(0xFFD97706); // Amber Warning
+  static const Color errorColor = Color(0xFFDC2626); // Coral Red
+  static const Color infoColor = Color(0xFF0284C7); // Sky Blue
+  static const Color primaryBlue = Color(0xFF2563EB); // Executive Blue
 
-  static const Color textPrimary = Color(0xFFF1F5F9); // Soft near-white
-  static const Color textSecondary = Color(0xFF94A3B8); // Muted blue-gray
-  static const Color textMuted = Color(0xFF64748B);
+  // Typography Palette
+  static const Color textPrimary = Color(0xFF0F172A); // Dark slate
+  static const Color textSecondary = Color(0xFF64748B); // Muted slate
+  static const Color textMuted = Color(0xFF94A3B8);
+  static const Color textOnDark = Color(
+    0xFFF8FAFC,
+  ); // Crisp white text on dark cards
 
-  static const Color borderColor = Color(0xFF1E293B);
-  static const Color borderLight = Color(0x28FFFFFF);
+  // Borders & Dividers
+  static const Color borderColor = Color(0xFFE2E8F0); // Subtle clean border
+  static const Color borderLight = Color(0xFFF1F5F9);
+  static const Color borderDark = Color(0xFF334155);
 
   // Backward compatibility aliases
   static const Color backgroundColor = background;
   static const Color surfaceColor = surface;
 
-  static ThemeData get darkTheme {
+  static ThemeData get lightTheme {
     return ThemeData(
       useMaterial3: true,
-      brightness: Brightness.dark,
+      brightness: Brightness.light,
       colorScheme: const ColorScheme(
-        brightness: Brightness.dark,
+        brightness: Brightness.light,
         primary: primaryColor,
-        onPrimary: Color(0xFF042F2E),
-        primaryContainer: Color(0xFF134E4A),
-        onPrimaryContainer: Color(0xFFCCFBF1),
-        secondary: accentColor,
-        onSecondary: Color(0xFF022C22),
-        secondaryContainer: Color(0xFF065F46),
-        onSecondaryContainer: Color(0xFFD1FAE5),
+        onPrimary: Colors.white,
+        primaryContainer: Color(0xFFCCFBF1),
+        onPrimaryContainer: Color(0xFF042F2E),
+        secondary: primaryNavy,
+        onSecondary: Colors.white,
+        secondaryContainer: Color(0xFFE2E8F0),
+        onSecondaryContainer: primaryNavy,
         surface: surface,
         onSurface: textPrimary,
         error: errorColor,
@@ -51,19 +61,20 @@ class AppTheme {
         outlineVariant: borderLight,
       ),
       scaffoldBackgroundColor: background,
-      canvasColor: surface,
+      canvasColor: background,
       cardColor: surface,
       dividerColor: borderColor,
       appBarTheme: const AppBarTheme(
-        backgroundColor: background,
+        backgroundColor: primaryNavy,
+        foregroundColor: Colors.white,
         surfaceTintColor: Colors.transparent,
         elevation: 0,
         scrolledUnderElevation: 0,
         centerTitle: false,
-        iconTheme: IconThemeData(color: textPrimary),
+        iconTheme: IconThemeData(color: Colors.white),
         titleTextStyle: TextStyle(
-          color: textPrimary,
-          fontSize: 20,
+          color: Colors.white,
+          fontSize: 18,
           fontWeight: FontWeight.w700,
           letterSpacing: -0.2,
         ),
@@ -78,15 +89,15 @@ class AppTheme {
         ),
       ),
       navigationBarTheme: NavigationBarThemeData(
-        backgroundColor: surface,
+        backgroundColor: primaryNavy,
         surfaceTintColor: Colors.transparent,
         elevation: 0,
-        indicatorColor: primaryColor.withValues(alpha: 0.15),
+        indicatorColor: primaryLight.withValues(alpha: 0.2),
         iconTheme: WidgetStateProperty.resolveWith((states) {
           if (states.contains(WidgetState.selected)) {
             return const IconThemeData(color: primaryLight);
           }
-          return const IconThemeData(color: textSecondary);
+          return const IconThemeData(color: Color(0xFF94A3B8));
         }),
         labelTextStyle: WidgetStateProperty.resolveWith((states) {
           if (states.contains(WidgetState.selected)) {
@@ -97,7 +108,7 @@ class AppTheme {
             );
           }
           return const TextStyle(
-            color: textSecondary,
+            color: Color(0xFF94A3B8),
             fontSize: 12,
             fontWeight: FontWeight.normal,
           );
@@ -137,8 +148,8 @@ class AppTheme {
       ),
       elevatedButtonTheme: ElevatedButtonThemeData(
         style: ElevatedButton.styleFrom(
-          backgroundColor: primaryColor,
-          foregroundColor: const Color(0xFF042F2E),
+          backgroundColor: primaryNavy,
+          foregroundColor: Colors.white,
           elevation: 0,
           padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 14),
           minimumSize: const Size(64, 46),
@@ -154,8 +165,8 @@ class AppTheme {
       ),
       outlinedButtonTheme: OutlinedButtonThemeData(
         style: OutlinedButton.styleFrom(
-          foregroundColor: textPrimary,
-          side: const BorderSide(color: borderColor),
+          foregroundColor: primaryNavy,
+          side: const BorderSide(color: Color(0xFFCBD5E1)),
           padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 14),
           minimumSize: const Size(64, 46),
           shape: RoundedRectangleBorder(
@@ -166,7 +177,7 @@ class AppTheme {
       ),
       textButtonTheme: TextButtonThemeData(
         style: TextButton.styleFrom(
-          foregroundColor: primaryLight,
+          foregroundColor: primaryColor,
           textStyle: const TextStyle(fontSize: 14, fontWeight: FontWeight.w600),
         ),
       ),
@@ -194,35 +205,16 @@ class AppTheme {
       ),
       chipTheme: ChipThemeData(
         backgroundColor: surfaceElevated,
-        selectedColor: primaryColor.withValues(alpha: 0.2),
+        selectedColor: primaryColor.withValues(alpha: 0.15),
         secondarySelectedColor: primaryColor,
         disabledColor: surface,
         labelStyle: const TextStyle(color: textPrimary, fontSize: 13),
-        secondaryLabelStyle: const TextStyle(color: primaryLight, fontSize: 13),
+        secondaryLabelStyle: const TextStyle(color: primaryColor, fontSize: 13),
         padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
         shape: RoundedRectangleBorder(
           borderRadius: BorderRadius.circular(8),
           side: const BorderSide(color: borderColor),
         ),
-      ),
-      dropdownMenuTheme: DropdownMenuThemeData(
-        menuStyle: MenuStyle(
-          backgroundColor: WidgetStateProperty.all(surfaceElevated),
-          shape: WidgetStateProperty.all(
-            RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(12),
-              side: const BorderSide(color: borderColor),
-            ),
-          ),
-        ),
-      ),
-      popupMenuTheme: PopupMenuThemeData(
-        color: surfaceElevated,
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(12),
-          side: const BorderSide(color: borderColor),
-        ),
-        textStyle: const TextStyle(color: textPrimary),
       ),
       dividerTheme: const DividerThemeData(
         color: borderColor,
@@ -236,5 +228,5 @@ class AppTheme {
     );
   }
 
-  static ThemeData get lightTheme => darkTheme;
+  static ThemeData get darkTheme => lightTheme;
 }
