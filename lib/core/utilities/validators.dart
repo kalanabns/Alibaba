@@ -75,7 +75,7 @@ class Validators {
       'September',
       'October',
       'November',
-      'December'
+      'December',
     ];
     final index = months.indexOf(month.trim());
     if (index == -1) {

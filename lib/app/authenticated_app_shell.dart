@@ -2,6 +2,10 @@ import 'package:flutter/material.dart';
 import '../core/theme/app_theme.dart';
 import '../features/authentication/application/auth_controller.dart';
 import '../features/businesses/application/business_controller.dart';
+import '../features/financial_health/application/financial_health_controller.dart';
+import '../features/financial_health/presentation/dashboard_screen.dart';
+import '../features/transactions/application/transaction_controller.dart';
+import '../features/transactions/presentation/transactions_screen.dart';
 
 class AuthenticatedAppShell extends StatefulWidget {
   const AuthenticatedAppShell({
@@ -19,6 +23,38 @@ class AuthenticatedAppShell extends StatefulWidget {
 
 class _AuthenticatedAppShellState extends State<AuthenticatedAppShell> {
   int _selectedIndex = 0;
+  late final TransactionController _transactionController;
+  late final FinancialHealthController _healthController;
+
+  @override
+  void initState() {
+    super.initState();
+    _healthController = FinancialHealthController();
+    _transactionController = TransactionController(
+      onTransactionsChanged: () {
+        final business = widget.businessController.currentBusiness;
+        if (business != null) {
+          _healthController.recalculate(
+            businessId: business.id,
+            allTransactions: _transactionController.transactions,
+            silent: true,
+          );
+        }
+      },
+    );
+
+    final business = widget.businessController.currentBusiness;
+    if (business != null) {
+      _transactionController.loadTransactions(businessId: business.id);
+    }
+  }
+
+  @override
+  void dispose() {
+    _transactionController.dispose();
+    _healthController.dispose();
+    super.dispose();
+  }
 
   void _handleSignOut() {
     widget.businessController.reset();
@@ -29,48 +65,96 @@ class _AuthenticatedAppShellState extends State<AuthenticatedAppShell> {
   Widget build(BuildContext context) {
     final business = widget.businessController.currentBusiness;
 
+    if (business == null) {
+      return const Scaffold(body: Center(child: Text('No business selected.')));
+    }
+
     final pages = [
-      _buildHomeTab(context, business),
-      _buildPlaceholderTab(
-        title: 'Transactions',
-        icon: Icons.receipt_long_outlined,
-        description: 'CSV and manual transaction management will be implemented in Stage 3.',
+      DashboardScreen(
+        healthController: _healthController,
+        transactionController: _transactionController,
+        business: business,
+        onNavigateToTransactions: () {
+          setState(() {
+            _selectedIndex = 1;
+          });
+        },
+      ),
+      TransactionsScreen(
+        controller: _transactionController,
+        businessId: business.id,
+        currency: business.currency,
       ),
       _buildPlaceholderTab(
-        title: 'AI CFO',
+        title: 'AI CFO Advisory',
         icon: Icons.psychology_outlined,
-        description: 'Qoder Cloud Agents AI financial advisor will be connected in Stage 6.',
+        badgeText: 'Coming in Stage 6',
+        description:
+            'Qoder Cloud Agents will provide executive analysis, scenario planning, and financial recommendations.',
       ),
       _buildPlaceholderTab(
-        title: 'Alerts & Risks',
+        title: 'Alerts & Risk Engine',
         icon: Icons.notifications_none_outlined,
-        description: 'Risk and opportunity detection engine will be added in Stage 5.',
+        badgeText: 'Coming in Stage 5',
+        description:
+            'Anomaly detection, distress warnings, and growth opportunities based on transaction momentum.',
       ),
       _buildSettingsTab(context),
     ];
 
     return Scaffold(
-      backgroundColor: AppTheme.backgroundColor,
+      backgroundColor: AppTheme.background,
       appBar: AppBar(
         title: Row(
           children: [
-            const Icon(Icons.account_balance_wallet, color: AppTheme.primaryColor),
-            const SizedBox(width: 8),
-            Text(business?.name ?? 'Finora AI'),
+            Container(
+              padding: const EdgeInsets.all(6),
+              decoration: BoxDecoration(
+                color: AppTheme.primaryColor.withValues(alpha: 0.15),
+                borderRadius: BorderRadius.circular(8),
+              ),
+              child: const Icon(
+                Icons.account_balance_wallet,
+                color: AppTheme.primaryLight,
+                size: 20,
+              ),
+            ),
+            const SizedBox(width: 10),
+            Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  business.name,
+                  style: const TextStyle(
+                    fontSize: 16,
+                    fontWeight: FontWeight.bold,
+                    color: AppTheme.textPrimary,
+                  ),
+                ),
+                Text(
+                  '${business.currency} • ${business.industry ?? "General"}',
+                  style: const TextStyle(
+                    fontSize: 11,
+                    color: AppTheme.textSecondary,
+                  ),
+                ),
+              ],
+            ),
           ],
         ),
         actions: [
           IconButton(
-            icon: const Icon(Icons.logout),
+            icon: const Icon(
+              Icons.logout,
+              color: AppTheme.textSecondary,
+              size: 20,
+            ),
             tooltip: 'Log Out',
             onPressed: _handleSignOut,
           ),
         ],
       ),
-      body: IndexedStack(
-        index: _selectedIndex,
-        children: pages,
-      ),
+      body: IndexedStack(index: _selectedIndex, children: pages),
       bottomNavigationBar: NavigationBar(
         selectedIndex: _selectedIndex,
         onDestinationSelected: (index) {
@@ -80,9 +164,9 @@ class _AuthenticatedAppShellState extends State<AuthenticatedAppShell> {
         },
         destinations: const [
           NavigationDestination(
-            icon: Icon(Icons.home_outlined),
-            selectedIcon: Icon(Icons.home),
-            label: 'Home',
+            icon: Icon(Icons.dashboard_outlined),
+            selectedIcon: Icon(Icons.dashboard),
+            label: 'Dashboard',
           ),
           NavigationDestination(
             icon: Icon(Icons.receipt_long_outlined),
@@ -109,158 +193,75 @@ class _AuthenticatedAppShellState extends State<AuthenticatedAppShell> {
     );
   }
 
-  Widget _buildHomeTab(BuildContext context, dynamic business) {
-    final currency = business?.currency ?? 'USD';
-    final startingCash = business?.startingCash ?? 0.0;
-
-    return SingleChildScrollView(
-      padding: const EdgeInsets.all(20.0),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          const Text(
-            'Good morning',
-            style: TextStyle(
-              fontSize: 16,
-              color: AppTheme.textSecondary,
-            ),
-          ),
-          const SizedBox(height: 4),
-          Text(
-            business?.name ?? 'Your Business',
-            style: const TextStyle(
-              fontSize: 26,
-              fontWeight: FontWeight.bold,
-              color: AppTheme.textPrimary,
-            ),
-          ),
-          const SizedBox(height: 20),
-          Card(
-            child: Padding(
-              padding: const EdgeInsets.all(20.0),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    children: [
-                      const Text(
-                        'Starting Cash Balance',
-                        style: TextStyle(
-                          fontSize: 14,
-                          color: AppTheme.textSecondary,
-                          fontWeight: FontWeight.w500,
-                        ),
-                      ),
-                      Container(
-                        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
-                        decoration: BoxDecoration(
-                          color: AppTheme.primaryColor.withValues(alpha: 0.1),
-                          borderRadius: BorderRadius.circular(20),
-                        ),
-                        child: Text(
-                          currency,
-                          style: const TextStyle(
-                            color: AppTheme.primaryColor,
-                            fontWeight: FontWeight.bold,
-                            fontSize: 12,
-                          ),
-                        ),
-                      ),
-                    ],
-                  ),
-                  const SizedBox(height: 12),
-                  Text(
-                    '$currency ${startingCash.toStringAsFixed(2)}',
-                    style: const TextStyle(
-                      fontSize: 32,
-                      fontWeight: FontWeight.bold,
-                      color: AppTheme.textPrimary,
-                    ),
-                  ),
-                  const Divider(height: 32),
-                  Row(
-                    children: [
-                      const Icon(Icons.business, size: 18, color: AppTheme.textSecondary),
-                      const SizedBox(width: 8),
-                      Text(
-                        'Industry: ${business?.industry ?? "N/A"}',
-                        style: const TextStyle(color: AppTheme.textSecondary),
-                      ),
-                      const Spacer(),
-                      const Icon(Icons.public, size: 18, color: AppTheme.textSecondary),
-                      const SizedBox(width: 8),
-                      Text(
-                        business?.country ?? 'N/A',
-                        style: const TextStyle(color: AppTheme.textSecondary),
-                      ),
-                    ],
-                  ),
-                ],
-              ),
-            ),
-          ),
-          const SizedBox(height: 20),
-          Container(
-            padding: const EdgeInsets.all(20),
-            decoration: BoxDecoration(
-              color: Colors.blue.shade50,
-              borderRadius: BorderRadius.circular(16),
-              border: Border.all(color: Colors.blue.shade200),
-            ),
-            child: const Row(
-              children: [
-                Icon(Icons.info_outline, color: AppTheme.primaryColor, size: 28),
-                SizedBox(width: 16),
-                Expanded(
-                  child: Text(
-                    'Financial health metrics, forecasts, and AI insights will appear here after transaction data is imported in later stages.',
-                    style: TextStyle(
-                      fontSize: 14,
-                      color: AppTheme.primaryColor,
-                      height: 1.4,
-                    ),
-                  ),
-                ),
-              ],
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-
   Widget _buildPlaceholderTab({
     required String title,
     required IconData icon,
+    required String badgeText,
     required String description,
   }) {
     return Center(
       child: Padding(
         padding: const EdgeInsets.all(32.0),
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            Icon(icon, size: 64, color: AppTheme.textSecondary.withValues(alpha: 0.5)),
-            const SizedBox(height: 16),
-            Text(
-              title,
-              style: const TextStyle(
-                fontSize: 22,
-                fontWeight: FontWeight.bold,
-                color: AppTheme.textPrimary,
+        child: Container(
+          padding: const EdgeInsets.all(28),
+          decoration: BoxDecoration(
+            color: AppTheme.surface,
+            borderRadius: BorderRadius.circular(20),
+            border: Border.all(color: AppTheme.borderColor),
+          ),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Container(
+                width: 64,
+                height: 64,
+                decoration: BoxDecoration(
+                  color: AppTheme.surfaceElevated,
+                  shape: BoxShape.circle,
+                  border: Border.all(color: AppTheme.borderColor),
+                ),
+                child: Icon(icon, size: 32, color: AppTheme.primaryLight),
               ),
-            ),
-            const SizedBox(height: 8),
-            Text(
-              description,
-              textAlign: TextAlign.center,
-              style: const TextStyle(
-                fontSize: 14,
-                color: AppTheme.textSecondary,
+              const SizedBox(height: 16),
+              Container(
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 10,
+                  vertical: 4,
+                ),
+                decoration: BoxDecoration(
+                  color: AppTheme.primaryColor.withValues(alpha: 0.15),
+                  borderRadius: BorderRadius.circular(20),
+                ),
+                child: Text(
+                  badgeText.toUpperCase(),
+                  style: const TextStyle(
+                    color: AppTheme.primaryLight,
+                    fontSize: 11,
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
               ),
-            ),
-          ],
+              const SizedBox(height: 12),
+              Text(
+                title,
+                style: const TextStyle(
+                  fontSize: 20,
+                  fontWeight: FontWeight.bold,
+                  color: AppTheme.textPrimary,
+                ),
+              ),
+              const SizedBox(height: 8),
+              Text(
+                description,
+                textAlign: TextAlign.center,
+                style: const TextStyle(
+                  fontSize: 13,
+                  color: AppTheme.textSecondary,
+                  height: 1.4,
+                ),
+              ),
+            ],
+          ),
         ),
       ),
     );
@@ -282,36 +283,101 @@ class _AuthenticatedAppShellState extends State<AuthenticatedAppShell> {
           ),
         ),
         const SizedBox(height: 16),
-        ListTile(
-          leading: const Icon(Icons.person_outline),
-          title: const Text('User Email'),
-          subtitle: Text(user?.email ?? 'N/A'),
-        ),
-        const Divider(),
-        ListTile(
-          leading: const Icon(Icons.store_outlined),
-          title: const Text('Business Name'),
-          subtitle: Text(business?.name ?? 'N/A'),
-        ),
-        ListTile(
-          leading: const Icon(Icons.monetization_on_outlined),
-          title: const Text('Reporting Currency'),
-          subtitle: Text(business?.currency ?? 'USD'),
-        ),
-        ListTile(
-          leading: const Icon(Icons.calendar_month_outlined),
-          title: const Text('Fiscal Year Start Month'),
-          subtitle: Text('Month ${business?.fiscalYearStartMonth ?? 1}'),
-        ),
-        const Divider(),
-        const SizedBox(height: 20),
-        ElevatedButton.icon(
-          onPressed: _handleSignOut,
-          style: ElevatedButton.styleFrom(
-            backgroundColor: AppTheme.errorColor,
+        Container(
+          decoration: BoxDecoration(
+            color: AppTheme.surface,
+            borderRadius: BorderRadius.circular(16),
+            border: Border.all(color: AppTheme.borderColor),
           ),
-          icon: const Icon(Icons.logout),
-          label: const Text('Log Out'),
+          child: Column(
+            children: [
+              ListTile(
+                leading: const Icon(
+                  Icons.person_outline,
+                  color: AppTheme.textSecondary,
+                ),
+                title: const Text(
+                  'User Email',
+                  style: TextStyle(fontSize: 13, color: AppTheme.textSecondary),
+                ),
+                subtitle: Text(
+                  user?.email ?? 'N/A',
+                  style: const TextStyle(
+                    fontSize: 15,
+                    color: AppTheme.textPrimary,
+                    fontWeight: FontWeight.w600,
+                  ),
+                ),
+              ),
+              const Divider(height: 1),
+              ListTile(
+                leading: const Icon(
+                  Icons.store_outlined,
+                  color: AppTheme.textSecondary,
+                ),
+                title: const Text(
+                  'Business Name',
+                  style: TextStyle(fontSize: 13, color: AppTheme.textSecondary),
+                ),
+                subtitle: Text(
+                  business?.name ?? 'N/A',
+                  style: const TextStyle(
+                    fontSize: 15,
+                    color: AppTheme.textPrimary,
+                    fontWeight: FontWeight.w600,
+                  ),
+                ),
+              ),
+              const Divider(height: 1),
+              ListTile(
+                leading: const Icon(
+                  Icons.monetization_on_outlined,
+                  color: AppTheme.textSecondary,
+                ),
+                title: const Text(
+                  'Base Currency',
+                  style: TextStyle(fontSize: 13, color: AppTheme.textSecondary),
+                ),
+                subtitle: Text(
+                  business?.currency ?? 'USD',
+                  style: const TextStyle(
+                    fontSize: 15,
+                    color: AppTheme.textPrimary,
+                    fontWeight: FontWeight.w600,
+                  ),
+                ),
+              ),
+              const Divider(height: 1),
+              ListTile(
+                leading: const Icon(
+                  Icons.calendar_month_outlined,
+                  color: AppTheme.textSecondary,
+                ),
+                title: const Text(
+                  'Fiscal Year Start Month',
+                  style: TextStyle(fontSize: 13, color: AppTheme.textSecondary),
+                ),
+                subtitle: Text(
+                  'Month ${business?.fiscalYearStartMonth ?? 1}',
+                  style: const TextStyle(
+                    fontSize: 15,
+                    color: AppTheme.textPrimary,
+                    fontWeight: FontWeight.w600,
+                  ),
+                ),
+              ),
+            ],
+          ),
+        ),
+        const SizedBox(height: 24),
+        OutlinedButton.icon(
+          onPressed: _handleSignOut,
+          style: OutlinedButton.styleFrom(
+            foregroundColor: AppTheme.errorColor,
+            side: const BorderSide(color: AppTheme.errorColor),
+          ),
+          icon: const Icon(Icons.logout, size: 18),
+          label: const Text('Log Out of Finora'),
         ),
       ],
     );

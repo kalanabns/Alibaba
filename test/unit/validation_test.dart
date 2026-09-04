@@ -9,9 +9,18 @@ void main() {
     });
 
     test('returns error for invalid email format', () {
-      expect(Validators.validateEmail('invalid-email'), 'Please enter a valid email address.');
-      expect(Validators.validateEmail('user@domain'), 'Please enter a valid email address.');
-      expect(Validators.validateEmail('@domain.com'), 'Please enter a valid email address.');
+      expect(
+        Validators.validateEmail('invalid-email'),
+        'Please enter a valid email address.',
+      );
+      expect(
+        Validators.validateEmail('user@domain'),
+        'Please enter a valid email address.',
+      );
+      expect(
+        Validators.validateEmail('@domain.com'),
+        'Please enter a valid email address.',
+      );
     });
 
     test('returns null for valid email address', () {
@@ -27,7 +36,10 @@ void main() {
     });
 
     test('returns error for short password (<6 chars)', () {
-      expect(Validators.validatePassword('12345'), 'Password must be at least 6 characters long.');
+      expect(
+        Validators.validatePassword('12345'),
+        'Password must be at least 6 characters long.',
+      );
     });
 
     test('returns null for valid password (>=6 chars)', () {
@@ -49,8 +61,14 @@ void main() {
   group('Validators — Starting Cash & Currency Parsing', () {
     test('returns error for invalid or negative starting cash', () {
       expect(Validators.validateStartingCash(''), 'Starting cash is required.');
-      expect(Validators.validateStartingCash('abc'), 'Please enter a valid numeric amount.');
-      expect(Validators.validateStartingCash('-500'), 'Starting cash cannot be negative.');
+      expect(
+        Validators.validateStartingCash('abc'),
+        'Please enter a valid numeric amount.',
+      );
+      expect(
+        Validators.validateStartingCash('-500'),
+        'Starting cash cannot be negative.',
+      );
     });
 
     test('returns null for valid non-negative starting cash', () {

@@ -3,7 +3,7 @@ import '../domain/business.dart';
 
 class BusinessRepository {
   BusinessRepository({SupabaseClient? client})
-      : _client = client ?? Supabase.instance.client;
+    : _client = client ?? Supabase.instance.client;
 
   final SupabaseClient _client;
 
@@ -39,7 +39,9 @@ class BusinessRepository {
   }) async {
     final userId = _client.auth.currentUser?.id;
     if (userId == null) {
-      throw Exception('Authenticated user session required to create a business.');
+      throw Exception(
+        'Authenticated user session required to create a business.',
+      );
     }
 
     try {
@@ -61,7 +63,9 @@ class BusinessRepository {
     } on PostgrestException catch (e) {
       throw Exception('Failed to save business: ${e.message}');
     } catch (e) {
-      throw Exception('An unexpected error occurred while creating your business.');
+      throw Exception(
+        'An unexpected error occurred while creating your business.',
+      );
     }
   }
 

@@ -54,7 +54,8 @@ class _AuthGateState extends State<AuthGate> {
       builder: (context, _) {
         final authStatus = widget.authController.status;
 
-        if (authStatus == AuthStatus.initial || widget.authController.isLoading) {
+        if (authStatus == AuthStatus.initial ||
+            widget.authController.isLoading) {
           return const FinoraLoadingIndicator(
             message: 'Initializing Finora AI...',
           );
@@ -94,7 +95,8 @@ class _AuthGateState extends State<AuthGate> {
                     child: Padding(
                       padding: const EdgeInsets.all(24.0),
                       child: FinoraErrorView(
-                        message: widget.businessController.errorMessage ??
+                        message:
+                            widget.businessController.errorMessage ??
                             'Failed to load business details.',
                         onRetry: widget.businessController.loadUserBusiness,
                       ),

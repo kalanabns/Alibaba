@@ -20,7 +20,8 @@ class Business {
       industry: json['industry'] as String?,
       country: json['country'] as String?,
       currency: (json['currency'] as String?) ?? 'USD',
-      fiscalYearStartMonth: (json['fiscal_year_start_month'] as num?)?.toInt() ?? 1,
+      fiscalYearStartMonth:
+          (json['fiscal_year_start_month'] as num?)?.toInt() ?? 1,
       startingCash: (json['starting_cash'] as num?)?.toDouble() ?? 0.0,
       createdAt: DateTime.parse(json['created_at'] as String),
       updatedAt: DateTime.parse(json['updated_at'] as String),

@@ -7,7 +7,7 @@ enum AuthStatus { initial, loading, authenticated, unauthenticated }
 
 class AuthController extends ChangeNotifier {
   AuthController({AuthRepository? repository})
-      : _repository = repository ?? AuthRepository() {
+    : _repository = repository ?? AuthRepository() {
     _init();
   }
 
@@ -23,16 +23,21 @@ class AuthController extends ChangeNotifier {
   User? get currentUser => _currentUser;
   String? get errorMessage => _errorMessage;
   bool get isLoading => _isLoading;
-  bool get isAuthenticated => _status == AuthStatus.authenticated && _currentUser != null;
+  bool get isAuthenticated =>
+      _status == AuthStatus.authenticated && _currentUser != null;
 
   void _init() {
     _currentUser = _repository.currentUser;
-    _status = _currentUser != null ? AuthStatus.authenticated : AuthStatus.unauthenticated;
+    _status = _currentUser != null
+        ? AuthStatus.authenticated
+        : AuthStatus.unauthenticated;
     notifyListeners();
 
     _sub = _repository.authStateChanges.listen((data) {
       _currentUser = data.session?.user ?? _repository.currentUser;
-      _status = _currentUser != null ? AuthStatus.authenticated : AuthStatus.unauthenticated;
+      _status = _currentUser != null
+          ? AuthStatus.authenticated
+          : AuthStatus.unauthenticated;
       notifyListeners();
     });
   }
@@ -48,9 +53,14 @@ class AuthController extends ChangeNotifier {
     notifyListeners();
 
     try {
-      final response = await _repository.signIn(email: email, password: password);
+      final response = await _repository.signIn(
+        email: email,
+        password: password,
+      );
       _currentUser = response.user ?? _repository.currentUser;
-      _status = _currentUser != null ? AuthStatus.authenticated : AuthStatus.unauthenticated;
+      _status = _currentUser != null
+          ? AuthStatus.authenticated
+          : AuthStatus.unauthenticated;
       _isLoading = false;
       notifyListeners();
       return true;
@@ -68,9 +78,14 @@ class AuthController extends ChangeNotifier {
     notifyListeners();
 
     try {
-      final response = await _repository.signUp(email: email, password: password);
+      final response = await _repository.signUp(
+        email: email,
+        password: password,
+      );
       _currentUser = response.user ?? _repository.currentUser;
-      _status = _currentUser != null ? AuthStatus.authenticated : AuthStatus.unauthenticated;
+      _status = _currentUser != null
+          ? AuthStatus.authenticated
+          : AuthStatus.unauthenticated;
       _isLoading = false;
       notifyListeners();
       return true;

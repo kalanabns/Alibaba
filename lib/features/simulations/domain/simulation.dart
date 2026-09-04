@@ -18,8 +18,10 @@ class Simulation {
       userId: json['user_id'] as String,
       name: json['name'] as String,
       assumptions: (json['assumptions'] as Map<String, dynamic>?) ?? const {},
-      baselineMetrics: (json['baseline_metrics'] as Map<String, dynamic>?) ?? const {},
-      projectedMetrics: (json['projected_metrics'] as Map<String, dynamic>?) ?? const {},
+      baselineMetrics:
+          (json['baseline_metrics'] as Map<String, dynamic>?) ?? const {},
+      projectedMetrics:
+          (json['projected_metrics'] as Map<String, dynamic>?) ?? const {},
       aiAnalysis: json['ai_analysis'] as String?,
       createdAt: DateTime.parse(json['created_at'] as String),
     );

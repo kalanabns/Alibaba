@@ -12,7 +12,8 @@ class BusinessOnboardingScreen extends StatefulWidget {
   final BusinessController businessController;
 
   @override
-  State<BusinessOnboardingScreen> createState() => _BusinessOnboardingScreenState();
+  State<BusinessOnboardingScreen> createState() =>
+      _BusinessOnboardingScreenState();
 }
 
 class _BusinessOnboardingScreenState extends State<BusinessOnboardingScreen> {
@@ -108,12 +109,14 @@ class _BusinessOnboardingScreenState extends State<BusinessOnboardingScreen> {
 
     final finalIndustry = _selectedIndustry == 'Other'
         ? (_otherIndustryController.text.trim().isNotEmpty
-            ? _otherIndustryController.text.trim()
-            : 'Other')
+              ? _otherIndustryController.text.trim()
+              : 'Other')
         : _selectedIndustry;
 
     final monthInt = Validators.monthNameToInteger(_selectedFiscalMonth);
-    final startingCash = Validators.parseStartingCash(_startingCashController.text);
+    final startingCash = Validators.parseStartingCash(
+      _startingCashController.text,
+    );
 
     await widget.businessController.createBusiness(
       name: _nameController.text.trim(),
@@ -129,9 +132,7 @@ class _BusinessOnboardingScreenState extends State<BusinessOnboardingScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: AppTheme.backgroundColor,
-      appBar: AppBar(
-        title: const Text('Set Up Your Business'),
-      ),
+      appBar: AppBar(title: const Text('Set Up Your Business')),
       body: SafeArea(
         child: SingleChildScrollView(
           padding: const EdgeInsets.all(24.0),
@@ -173,7 +174,8 @@ class _BusinessOnboardingScreenState extends State<BusinessOnboardingScreen> {
                       hint: 'e.g. BrightWave Solutions',
                       prefixIcon: Icons.business_outlined,
                       enabled: !isSubmitting,
-                      validator: (val) => Validators.validateRequired(val, 'Business name'),
+                      validator: (val) =>
+                          Validators.validateRequired(val, 'Business name'),
                     ),
                     const SizedBox(height: 16),
                     DropdownButtonFormField<String>(
@@ -183,12 +185,17 @@ class _BusinessOnboardingScreenState extends State<BusinessOnboardingScreen> {
                         prefixIcon: Icon(Icons.category_outlined),
                       ),
                       items: _industries
-                          .map((ind) => DropdownMenuItem(value: ind, child: Text(ind)))
+                          .map(
+                            (ind) =>
+                                DropdownMenuItem(value: ind, child: Text(ind)),
+                          )
                           .toList(),
                       onChanged: isSubmitting
                           ? null
                           : (val) {
-                              if (val != null) setState(() => _selectedIndustry = val);
+                              if (val != null) {
+                                setState(() => _selectedIndustry = val);
+                              }
                             },
                     ),
                     if (_selectedIndustry == 'Other') ...[
@@ -198,7 +205,8 @@ class _BusinessOnboardingScreenState extends State<BusinessOnboardingScreen> {
                         label: 'Specify Industry',
                         hint: 'e.g. Clean Energy Tech',
                         enabled: !isSubmitting,
-                        validator: (val) => Validators.validateRequired(val, 'Industry'),
+                        validator: (val) =>
+                            Validators.validateRequired(val, 'Industry'),
                       ),
                     ],
                     const SizedBox(height: 16),
@@ -209,7 +217,9 @@ class _BusinessOnboardingScreenState extends State<BusinessOnboardingScreen> {
                         prefixIcon: Icon(Icons.public_outlined),
                       ),
                       items: _countryCurrencyMap.keys
-                          .map((c) => DropdownMenuItem(value: c, child: Text(c)))
+                          .map(
+                            (c) => DropdownMenuItem(value: c, child: Text(c)),
+                          )
                           .toList(),
                       onChanged: isSubmitting ? null : _onCountryChanged,
                     ),
@@ -221,12 +231,17 @@ class _BusinessOnboardingScreenState extends State<BusinessOnboardingScreen> {
                         prefixIcon: Icon(Icons.monetization_on_outlined),
                       ),
                       items: _currencies
-                          .map((cur) => DropdownMenuItem(value: cur, child: Text(cur)))
+                          .map(
+                            (cur) =>
+                                DropdownMenuItem(value: cur, child: Text(cur)),
+                          )
                           .toList(),
                       onChanged: isSubmitting
                           ? null
                           : (val) {
-                              if (val != null) setState(() => _selectedCurrency = val);
+                              if (val != null) {
+                                setState(() => _selectedCurrency = val);
+                              }
                             },
                     ),
                     const SizedBox(height: 16),
@@ -237,12 +252,16 @@ class _BusinessOnboardingScreenState extends State<BusinessOnboardingScreen> {
                         prefixIcon: Icon(Icons.calendar_month_outlined),
                       ),
                       items: _months
-                          .map((m) => DropdownMenuItem(value: m, child: Text(m)))
+                          .map(
+                            (m) => DropdownMenuItem(value: m, child: Text(m)),
+                          )
                           .toList(),
                       onChanged: isSubmitting
                           ? null
                           : (val) {
-                              if (val != null) setState(() => _selectedFiscalMonth = val);
+                              if (val != null) {
+                                setState(() => _selectedFiscalMonth = val);
+                              }
                             },
                     ),
                     const SizedBox(height: 16),
@@ -250,7 +269,9 @@ class _BusinessOnboardingScreenState extends State<BusinessOnboardingScreen> {
                       controller: _startingCashController,
                       label: 'Starting Cash Balance',
                       hint: '0.00',
-                      keyboardType: const TextInputType.numberWithOptions(decimal: true),
+                      keyboardType: const TextInputType.numberWithOptions(
+                        decimal: true,
+                      ),
                       prefixIcon: Icons.account_balance_outlined,
                       enabled: !isSubmitting,
                       validator: Validators.validateStartingCash,

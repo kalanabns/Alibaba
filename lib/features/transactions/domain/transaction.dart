@@ -77,6 +77,68 @@ class Transaction {
   final DateTime createdAt;
   final DateTime updatedAt;
 
+  bool get isIncome => transactionType == TransactionType.income;
+  bool get isExpense => transactionType == TransactionType.expense;
+  bool get isTransfer => transactionType == TransactionType.transfer;
+
+  String get displayTitle {
+    if (description != null && description!.trim().isNotEmpty) {
+      return description!.trim();
+    }
+    if (merchantName != null && merchantName!.trim().isNotEmpty) {
+      return merchantName!.trim();
+    }
+    if (customerName != null && customerName!.trim().isNotEmpty) {
+      return customerName!.trim();
+    }
+    if (supplierName != null && supplierName!.trim().isNotEmpty) {
+      return supplierName!.trim();
+    }
+    return category;
+  }
+
+  Transaction copyWith({
+    String? id,
+    String? businessId,
+    DateTime? transactionDate,
+    TransactionType? transactionType,
+    String? category,
+    String? subcategory,
+    double? amount,
+    String? currency,
+    String? description,
+    String? merchantName,
+    String? customerName,
+    String? supplierName,
+    PaymentStatus? paymentStatus,
+    TransactionSource? source,
+    String? externalReference,
+    String? rawText,
+    DateTime? createdAt,
+    DateTime? updatedAt,
+  }) {
+    return Transaction(
+      id: id ?? this.id,
+      businessId: businessId ?? this.businessId,
+      transactionDate: transactionDate ?? this.transactionDate,
+      transactionType: transactionType ?? this.transactionType,
+      category: category ?? this.category,
+      subcategory: subcategory ?? this.subcategory,
+      amount: amount ?? this.amount,
+      currency: currency ?? this.currency,
+      description: description ?? this.description,
+      merchantName: merchantName ?? this.merchantName,
+      customerName: customerName ?? this.customerName,
+      supplierName: supplierName ?? this.supplierName,
+      paymentStatus: paymentStatus ?? this.paymentStatus,
+      source: source ?? this.source,
+      externalReference: externalReference ?? this.externalReference,
+      rawText: rawText ?? this.rawText,
+      createdAt: createdAt ?? this.createdAt,
+      updatedAt: updatedAt ?? this.updatedAt,
+    );
+  }
+
   Map<String, dynamic> toJson() {
     return {
       'id': id,

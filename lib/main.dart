@@ -49,7 +49,9 @@ class _FinoraAppState extends State<FinoraApp> {
     return MaterialApp(
       title: 'Finora AI',
       debugShowCheckedModeBanner: false,
-      theme: AppTheme.lightTheme,
+      theme: AppTheme.darkTheme,
+      darkTheme: AppTheme.darkTheme,
+      themeMode: ThemeMode.dark,
       home: AuthGate(
         authController: _authController,
         businessController: _businessController,

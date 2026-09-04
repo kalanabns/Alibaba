@@ -6,7 +6,7 @@ enum BusinessState { initial, loading, hasBusiness, noBusiness, error }
 
 class BusinessController extends ChangeNotifier {
   BusinessController({BusinessRepository? repository})
-      : _repository = repository ?? BusinessRepository();
+    : _repository = repository ?? BusinessRepository();
 
   final BusinessRepository _repository;
 

@@ -39,7 +39,9 @@ class Alert {
       thresholdValue: (json['threshold_value'] as num?)?.toDouble(),
       isRead: (json['is_read'] as bool?) ?? false,
       createdAt: DateTime.parse(json['created_at'] as String),
-      expiresAt: json['expires_at'] != null ? DateTime.parse(json['expires_at'] as String) : null,
+      expiresAt: json['expires_at'] != null
+          ? DateTime.parse(json['expires_at'] as String)
+          : null,
     );
   }
 

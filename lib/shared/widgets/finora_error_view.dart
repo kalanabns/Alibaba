@@ -2,11 +2,7 @@ import 'package:flutter/material.dart';
 import '../../core/theme/app_theme.dart';
 
 class FinoraErrorView extends StatelessWidget {
-  const FinoraErrorView({
-    super.key,
-    required this.message,
-    this.onRetry,
-  });
+  const FinoraErrorView({super.key, required this.message, this.onRetry});
 
   final String message;
   final VoidCallback? onRetry;
@@ -16,9 +12,9 @@ class FinoraErrorView extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: const Color(0xFFFEF2F2),
+        color: AppTheme.errorColor.withValues(alpha: 0.12),
         borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: const Color(0xFFFCA5A5)),
+        border: Border.all(color: AppTheme.errorColor.withValues(alpha: 0.4)),
       ),
       child: Row(
         children: [
@@ -28,17 +24,14 @@ class FinoraErrorView extends StatelessWidget {
             child: Text(
               message,
               style: const TextStyle(
-                color: Color(0xFF991B1B),
+                color: Color(0xFFFCA5A5),
                 fontSize: 14,
                 fontWeight: FontWeight.w500,
               ),
             ),
           ),
           if (onRetry != null)
-            TextButton(
-              onPressed: onRetry,
-              child: const Text('Retry'),
-            ),
+            TextButton(onPressed: onRetry, child: const Text('Retry')),
         ],
       ),
     );
