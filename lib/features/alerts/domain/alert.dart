@@ -1,3 +1,6 @@
+import 'package:flutter/material.dart';
+import '../../../core/theme/app_theme.dart';
+
 enum AlertType { risk, opportunity, information }
 
 enum AlertSeverity { critical, high, medium, low }
@@ -58,6 +61,68 @@ class Alert {
   final bool isRead;
   final DateTime createdAt;
   final DateTime? expiresAt;
+
+  bool get isRisk => alertType == AlertType.risk;
+  bool get isOpportunity => alertType == AlertType.opportunity;
+
+  Color get severityColor {
+    if (isOpportunity) return AppTheme.primaryLight;
+    switch (severity) {
+      case AlertSeverity.critical:
+        return AppTheme.errorColor;
+      case AlertSeverity.high:
+        return const Color(0xFFEA580C); // Dark orange
+      case AlertSeverity.medium:
+        return AppTheme.warningColor;
+      case AlertSeverity.low:
+        return AppTheme.infoColor;
+    }
+  }
+
+  String get severityLabel {
+    switch (severity) {
+      case AlertSeverity.critical:
+        return 'Critical';
+      case AlertSeverity.high:
+        return 'High Risk';
+      case AlertSeverity.medium:
+        return 'Medium Risk';
+      case AlertSeverity.low:
+        return isOpportunity ? 'Opportunity' : 'Notice';
+    }
+  }
+
+  Alert copyWith({
+    String? id,
+    String? businessId,
+    AlertType? alertType,
+    AlertSeverity? severity,
+    String? title,
+    String? description,
+    String? recommendation,
+    String? metricName,
+    double? metricValue,
+    double? thresholdValue,
+    bool? isRead,
+    DateTime? createdAt,
+    DateTime? expiresAt,
+  }) {
+    return Alert(
+      id: id ?? this.id,
+      businessId: businessId ?? this.businessId,
+      alertType: alertType ?? this.alertType,
+      severity: severity ?? this.severity,
+      title: title ?? this.title,
+      description: description ?? this.description,
+      recommendation: recommendation ?? this.recommendation,
+      metricName: metricName ?? this.metricName,
+      metricValue: metricValue ?? this.metricValue,
+      thresholdValue: thresholdValue ?? this.thresholdValue,
+      isRead: isRead ?? this.isRead,
+      createdAt: createdAt ?? this.createdAt,
+      expiresAt: expiresAt ?? this.expiresAt,
+    );
+  }
 
   Map<String, dynamic> toJson() {
     return {

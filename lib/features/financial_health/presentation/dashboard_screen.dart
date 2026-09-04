@@ -3,13 +3,18 @@ import '../../../core/theme/app_theme.dart';
 import '../../../core/utilities/money_formatter.dart';
 import '../../../shared/widgets/finora_error_view.dart';
 import '../../../shared/widgets/finora_loading_indicator.dart';
+import '../../ai_cfo/application/ai_cfo_controller.dart';
+import '../../alerts/application/alerts_controller.dart';
+import '../../alerts/domain/alert.dart';
 import '../../businesses/domain/business.dart';
 import '../../transactions/application/transaction_controller.dart';
 import '../../transactions/presentation/add_edit_transaction_dialog.dart';
 import '../../transactions/presentation/csv_import_flow.dart';
 import '../../transactions/presentation/widgets/transaction_tile.dart';
 import '../application/financial_health_controller.dart';
+import 'widgets/ai_summary_card.dart';
 import 'widgets/financial_charts.dart';
+import 'widgets/financial_signals_preview.dart';
 import 'widgets/health_score_card.dart';
 import 'widgets/kpi_metric_card.dart';
 
@@ -18,14 +23,24 @@ class DashboardScreen extends StatefulWidget {
     super.key,
     required this.healthController,
     required this.transactionController,
+    required this.alertsController,
+    required this.aiCfoController,
     required this.business,
     required this.onNavigateToTransactions,
+    required this.onNavigateToAlerts,
+    required this.onNavigateToAiCfo,
+    this.onExplainAlert,
   });
 
   final FinancialHealthController healthController;
   final TransactionController transactionController;
+  final AlertsController alertsController;
+  final AICFOController aiCfoController;
   final Business business;
   final VoidCallback onNavigateToTransactions;
+  final VoidCallback onNavigateToAlerts;
+  final VoidCallback onNavigateToAiCfo;
+  final void Function(Alert alert)? onExplainAlert;
 
   @override
   State<DashboardScreen> createState() => _DashboardScreenState();
@@ -43,6 +58,23 @@ class _DashboardScreenState extends State<DashboardScreen> {
       businessId: widget.business.id,
       allTransactions: widget.transactionController.transactions,
     );
+
+    final currentMetric = widget.healthController.currentMetric;
+    if (currentMetric != null) {
+      widget.alertsController.evaluateAndSync(
+        businessId: widget.business.id,
+        currentMetrics: currentMetric,
+        currentTransactions: widget.transactionController.transactions,
+        startingCash: widget.business.startingCash,
+      );
+
+      widget.aiCfoController.generateDashboardSummary(
+        businessId: widget.business.id,
+        currentMetrics: currentMetric,
+        business: widget.business,
+        activeAlerts: widget.alertsController.allAlerts,
+      );
+    }
   }
 
   void _openAddTransactionModal() {
@@ -53,7 +85,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
         businessId: widget.business.id,
         currency: widget.business.currency,
         onSave: (transaction) async {
-          return widget.transactionController.addTransaction(
+          final success = await widget.transactionController.addTransaction(
             businessId: widget.business.id,
             transactionDate: transaction.transactionDate,
             transactionType: transaction.transactionType,
@@ -68,6 +100,8 @@ class _DashboardScreenState extends State<DashboardScreen> {
             paymentStatus: transaction.paymentStatus,
             externalReference: transaction.externalReference,
           );
+          if (success) _loadData();
+          return success;
         },
       ),
     );
@@ -82,10 +116,12 @@ class _DashboardScreenState extends State<DashboardScreen> {
         currency: widget.business.currency,
         existingTransactions: widget.transactionController.transactions,
         onImportComplete: (transactions) async {
-          return widget.transactionController.importBatch(
+          final count = await widget.transactionController.importBatch(
             businessId: widget.business.id,
             transactions: transactions,
           );
+          if (count > 0) _loadData();
+          return count;
         },
       ),
     );
@@ -97,6 +133,8 @@ class _DashboardScreenState extends State<DashboardScreen> {
       listenable: Listenable.merge([
         widget.healthController,
         widget.transactionController,
+        widget.alertsController,
+        widget.aiCfoController,
       ]),
       builder: (context, _) {
         final isLoading = widget.healthController.isLoading;
@@ -132,7 +170,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
           backgroundColor: AppTheme.background,
           body: RefreshIndicator(
             color: AppTheme.primaryColor,
-            backgroundColor: AppTheme.surfaceElevated,
+            backgroundColor: AppTheme.surface,
             onRefresh: () async {
               await widget.transactionController.loadTransactions(
                 businessId: widget.business.id,
@@ -154,7 +192,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
                           const Text(
-                            'Financial Overview',
+                            'Financial Health Overview',
                             style: TextStyle(
                               fontSize: 13,
                               color: AppTheme.textSecondary,
@@ -173,23 +211,39 @@ class _DashboardScreenState extends State<DashboardScreen> {
                           ),
                         ],
                       ),
-                      // Period Range Selector
                       _buildPeriodSelector(),
                     ],
                   ),
-                  const SizedBox(height: 20),
+                  const SizedBox(height: 18),
 
                   if (!hasTransactions) ...[
                     // Empty Financial State
                     _buildEmptyFinancialState(),
                   ] else ...[
-                    // 1. Health Score Card
+                    // 1. Health Score Card (Navy / Teal Hero Accent)
                     if (breakdown != null) ...[
                       HealthScoreCard(breakdown: breakdown),
-                      const SizedBox(height: 18),
+                      const SizedBox(height: 16),
                     ],
 
-                    // 2. Primary KPI Grid
+                    // 2. AI CFO Executive Brief Card
+                    AISummaryCard(
+                      summary: widget.aiCfoController.cachedDashboardSummary,
+                      isLoading: widget.aiCfoController.isGeneratingSummary,
+                      onOpenChat: widget.onNavigateToAiCfo,
+                      onRefresh: () {
+                        widget.aiCfoController.generateDashboardSummary(
+                          businessId: widget.business.id,
+                          currentMetrics: metric,
+                          business: widget.business,
+                          activeAlerts: widget.alertsController.allAlerts,
+                          force: true,
+                        );
+                      },
+                    ),
+                    const SizedBox(height: 16),
+
+                    // 3. Primary KPI Grid (Crisp 60% White Cards)
                     LayoutBuilder(
                       builder: (context, constraints) {
                         final isTablet = constraints.maxWidth > 500;
@@ -247,67 +301,18 @@ class _DashboardScreenState extends State<DashboardScreen> {
                         );
                       },
                     ),
-                    const SizedBox(height: 14),
+                    const SizedBox(height: 16),
 
-                    // Working Capital Summary Banner
-                    if ((metric?.receivables ?? 0) > 0 ||
-                        (metric?.payables ?? 0) > 0) ...[
-                      Container(
-                        padding: const EdgeInsets.symmetric(
-                          horizontal: 16,
-                          vertical: 12,
-                        ),
-                        decoration: BoxDecoration(
-                          color: AppTheme.surface,
-                          borderRadius: BorderRadius.circular(14),
-                          border: Border.all(color: AppTheme.borderColor),
-                        ),
-                        child: Row(
-                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                          children: [
-                            Row(
-                              children: [
-                                const Icon(
-                                  Icons.outbox,
-                                  size: 16,
-                                  color: AppTheme.infoColor,
-                                ),
-                                const SizedBox(width: 6),
-                                Text(
-                                  'Receivables: ${MoneyFormatter.format(metric?.receivables ?? 0.0, currency: currency)}',
-                                  style: const TextStyle(
-                                    color: AppTheme.textPrimary,
-                                    fontSize: 12,
-                                    fontWeight: FontWeight.w600,
-                                  ),
-                                ),
-                              ],
-                            ),
-                            Row(
-                              children: [
-                                const Icon(
-                                  Icons.inbox,
-                                  size: 16,
-                                  color: AppTheme.warningColor,
-                                ),
-                                const SizedBox(width: 6),
-                                Text(
-                                  'Payables: ${MoneyFormatter.format(metric?.payables ?? 0.0, currency: currency)}',
-                                  style: const TextStyle(
-                                    color: AppTheme.textPrimary,
-                                    fontSize: 12,
-                                    fontWeight: FontWeight.w600,
-                                  ),
-                                ),
-                              ],
-                            ),
-                          ],
-                        ),
-                      ),
-                      const SizedBox(height: 18),
-                    ],
+                    // 4. Financial Signals Preview (Risks & Opportunities)
+                    FinancialSignalsPreview(
+                      risks: widget.alertsController.topRisks,
+                      opportunities: widget.alertsController.topOpportunities,
+                      onViewAll: widget.onNavigateToAlerts,
+                      onExplainAlert: widget.onExplainAlert,
+                    ),
+                    const SizedBox(height: 16),
 
-                    // 3. Financial Charts
+                    // 5. Financial Charts
                     RevenueExpensesChart(
                       buckets: widget.healthController.monthlyBuckets,
                       currency: currency,
@@ -319,7 +324,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
                     ),
                     const SizedBox(height: 20),
 
-                    // 4. Recent Transactions Section
+                    // 6. Recent Transactions Section
                     Row(
                       mainAxisAlignment: MainAxisAlignment.spaceBetween,
                       children: [
@@ -347,60 +352,6 @@ class _DashboardScreenState extends State<DashboardScreen> {
                         onTap: widget.onNavigateToTransactions,
                       );
                     }),
-                    const SizedBox(height: 20),
-
-                    // 5. AI CFO Preview Banner (Stage 6 notice)
-                    Container(
-                      padding: const EdgeInsets.all(16),
-                      decoration: BoxDecoration(
-                        color: AppTheme.surfaceElevated,
-                        borderRadius: BorderRadius.circular(16),
-                        border: Border.all(color: AppTheme.borderColor),
-                      ),
-                      child: Row(
-                        children: [
-                          Container(
-                            width: 40,
-                            height: 40,
-                            decoration: BoxDecoration(
-                              color: AppTheme.primaryColor.withValues(
-                                alpha: 0.15,
-                              ),
-                              borderRadius: BorderRadius.circular(10),
-                            ),
-                            child: const Icon(
-                              Icons.psychology_outlined,
-                              color: AppTheme.primaryLight,
-                              size: 22,
-                            ),
-                          ),
-                          const SizedBox(width: 14),
-                          const Expanded(
-                            child: Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [
-                                Text(
-                                  'AI CFO Advisory',
-                                  style: TextStyle(
-                                    color: AppTheme.textPrimary,
-                                    fontSize: 14,
-                                    fontWeight: FontWeight.bold,
-                                  ),
-                                ),
-                                SizedBox(height: 2),
-                                Text(
-                                  'Qoder Cloud Agents will analyze these calculated metrics in Stage 6.',
-                                  style: TextStyle(
-                                    color: AppTheme.textSecondary,
-                                    fontSize: 12,
-                                  ),
-                                ),
-                              ],
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
                   ],
                 ],
               ),
@@ -433,20 +384,28 @@ class _DashboardScreenState extends State<DashboardScreen> {
                 businessId: widget.business.id,
                 allTransactions: widget.transactionController.transactions,
               );
+              final metric = widget.healthController.currentMetric;
+              if (metric != null) {
+                widget.alertsController.evaluateAndSync(
+                  businessId: widget.business.id,
+                  currentMetrics: metric,
+                  currentTransactions:
+                      widget.transactionController.transactions,
+                  startingCash: widget.business.startingCash,
+                );
+              }
             },
             borderRadius: BorderRadius.circular(8),
             child: Container(
               padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
               decoration: BoxDecoration(
-                color: isSelected ? AppTheme.primaryColor : Colors.transparent,
+                color: isSelected ? AppTheme.primaryNavy : Colors.transparent,
                 borderRadius: BorderRadius.circular(8),
               ),
               child: Text(
                 range.shortLabel,
                 style: TextStyle(
-                  color: isSelected
-                      ? const Color(0xFF042F2E)
-                      : AppTheme.textSecondary,
+                  color: isSelected ? Colors.white : AppTheme.textSecondary,
                   fontSize: 12,
                   fontWeight: isSelected ? FontWeight.bold : FontWeight.w500,
                 ),
@@ -472,7 +431,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
             width: 64,
             height: 64,
             decoration: BoxDecoration(
-              color: AppTheme.primaryColor.withValues(alpha: 0.15),
+              color: AppTheme.primaryNavy,
               shape: BoxShape.circle,
             ),
             child: const Icon(
@@ -493,7 +452,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
           ),
           const SizedBox(height: 8),
           const Text(
-            'Import a CSV bank export or record your first transaction to instantly generate your financial health score, KPI ratios, and charts.',
+            'Import a CSV bank export or record your first transaction to instantly generate your financial health score, risk/opportunity signals, and AI CFO analysis.',
             textAlign: TextAlign.center,
             style: TextStyle(
               fontSize: 13,

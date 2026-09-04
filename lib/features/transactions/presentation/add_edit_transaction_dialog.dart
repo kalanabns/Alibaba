@@ -102,7 +102,7 @@ class _AddEditTransactionDialogState extends State<AddEditTransactionDialog> {
       firstDate: DateTime(2000),
       lastDate: DateTime(2100),
       builder: (context, child) {
-        return Theme(data: AppTheme.darkTheme, child: child!);
+        return Theme(data: AppTheme.lightTheme, child: child!);
       },
     );
 

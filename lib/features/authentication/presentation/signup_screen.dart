@@ -39,7 +39,6 @@ class _SignUpScreenState extends State<SignUpScreen> {
     );
 
     if (success && mounted) {
-      // Pop back to root auth gate controller
       Navigator.of(context).popUntil((route) => route.isFirst);
     }
   }
@@ -47,88 +46,109 @@ class _SignUpScreenState extends State<SignUpScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: AppTheme.backgroundColor,
+      backgroundColor: AppTheme.background,
       appBar: AppBar(title: const Text('Create Account')),
       body: SafeArea(
         child: Center(
           child: SingleChildScrollView(
-            padding: const EdgeInsets.all(24.0),
-            child: ListenableBuilder(
-              listenable: widget.authController,
-              builder: (context, _) {
-                final isLoading = widget.authController.isLoading;
-                final errorMessage = widget.authController.errorMessage;
+            padding: const EdgeInsets.symmetric(
+              horizontal: 24.0,
+              vertical: 32.0,
+            ),
+            child: ConstrainedBox(
+              constraints: const BoxConstraints(maxWidth: 440),
+              child: ListenableBuilder(
+                listenable: widget.authController,
+                builder: (context, _) {
+                  final isLoading = widget.authController.isLoading;
+                  final errorMessage = widget.authController.errorMessage;
 
-                return Form(
-                  key: _formKey,
-                  child: Column(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    crossAxisAlignment: CrossAxisAlignment.stretch,
-                    children: [
-                      const Text(
-                        'Get Started with Finora AI',
-                        style: TextStyle(
-                          fontSize: 24,
-                          fontWeight: FontWeight.bold,
-                          color: AppTheme.textPrimary,
+                  return Container(
+                    padding: const EdgeInsets.all(28.0),
+                    decoration: BoxDecoration(
+                      color: AppTheme.surface,
+                      borderRadius: BorderRadius.circular(20),
+                      border: Border.all(color: AppTheme.borderColor),
+                      boxShadow: [
+                        BoxShadow(
+                          color: Colors.black.withValues(alpha: 0.04),
+                          blurRadius: 12,
+                          offset: const Offset(0, 4),
                         ),
-                      ),
-                      const SizedBox(height: 8),
-                      const Text(
-                        'Create your account to start managing your business financial health.',
-                        style: TextStyle(
-                          fontSize: 14,
-                          color: AppTheme.textSecondary,
-                        ),
-                      ),
-                      const SizedBox(height: 32),
-                      if (errorMessage != null) ...[
-                        FinoraErrorView(
-                          message: errorMessage,
-                          onRetry: widget.authController.clearError,
-                        ),
-                        const SizedBox(height: 20),
                       ],
-                      FinoraTextField(
-                        controller: _emailController,
-                        label: 'Business Email',
-                        hint: 'owner@business.com',
-                        keyboardType: TextInputType.emailAddress,
-                        prefixIcon: Icons.email_outlined,
-                        enabled: !isLoading,
-                        validator: Validators.validateEmail,
+                    ),
+                    child: Form(
+                      key: _formKey,
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.stretch,
+                        children: [
+                          const Text(
+                            'Get Started with Finora AI',
+                            style: TextStyle(
+                              fontSize: 20,
+                              fontWeight: FontWeight.bold,
+                              color: AppTheme.textPrimary,
+                            ),
+                          ),
+                          const SizedBox(height: 6),
+                          const Text(
+                            'Create your account to start managing your business financial health.',
+                            style: TextStyle(
+                              fontSize: 13,
+                              color: AppTheme.textSecondary,
+                            ),
+                          ),
+                          const SizedBox(height: 24),
+                          if (errorMessage != null) ...[
+                            FinoraErrorView(
+                              message: errorMessage,
+                              onRetry: widget.authController.clearError,
+                            ),
+                            const SizedBox(height: 16),
+                          ],
+                          FinoraTextField(
+                            controller: _emailController,
+                            label: 'Business Email',
+                            hint: 'owner@business.com',
+                            keyboardType: TextInputType.emailAddress,
+                            prefixIcon: Icons.email_outlined,
+                            enabled: !isLoading,
+                            validator: Validators.validateEmail,
+                          ),
+                          const SizedBox(height: 16),
+                          FinoraTextField(
+                            controller: _passwordController,
+                            label: 'Password',
+                            obscureText: true,
+                            prefixIcon: Icons.lock_outlined,
+                            enabled: !isLoading,
+                            validator: Validators.validatePassword,
+                          ),
+                          const SizedBox(height: 16),
+                          FinoraTextField(
+                            controller: _confirmPasswordController,
+                            label: 'Confirm Password',
+                            obscureText: true,
+                            prefixIcon: Icons.lock_clock_outlined,
+                            enabled: !isLoading,
+                            validator: (val) =>
+                                Validators.validateConfirmPassword(
+                                  val,
+                                  _passwordController.text,
+                                ),
+                          ),
+                          const SizedBox(height: 24),
+                          FinoraPrimaryButton(
+                            text: 'Create Account',
+                            isLoading: isLoading,
+                            onPressed: _handleSignUp,
+                          ),
+                        ],
                       ),
-                      const SizedBox(height: 16),
-                      FinoraTextField(
-                        controller: _passwordController,
-                        label: 'Password',
-                        obscureText: true,
-                        prefixIcon: Icons.lock_outlined,
-                        enabled: !isLoading,
-                        validator: Validators.validatePassword,
-                      ),
-                      const SizedBox(height: 16),
-                      FinoraTextField(
-                        controller: _confirmPasswordController,
-                        label: 'Confirm Password',
-                        obscureText: true,
-                        prefixIcon: Icons.lock_clock_outlined,
-                        enabled: !isLoading,
-                        validator: (val) => Validators.validateConfirmPassword(
-                          val,
-                          _passwordController.text,
-                        ),
-                      ),
-                      const SizedBox(height: 24),
-                      FinoraPrimaryButton(
-                        text: 'Create Account',
-                        isLoading: isLoading,
-                        onPressed: _handleSignUp,
-                      ),
-                    ],
-                  ),
-                );
-              },
+                    ),
+                  );
+                },
+              ),
             ),
           ),
         ),
