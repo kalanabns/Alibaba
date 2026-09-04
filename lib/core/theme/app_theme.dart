@@ -35,9 +35,17 @@ class AppTheme {
   static const Color borderLight = Color(0xFFF1F5F9);
   static const Color borderDark = Color(0xFF334155);
 
-  // Backward compatibility aliases
+  // Backward compatibility & feature aliases
   static const Color backgroundColor = background;
   static const Color surfaceColor = surface;
+  static const Color canvasWhite = background;
+  static const Color cardLight = surface;
+  static const Color cardBorder = borderColor;
+  static const Color navyDeep = primaryNavy;
+  static const Color navyPrimary = primaryNavy;
+  static const Color tealAccent = primaryLight;
+  static const Color coralRisk = errorColor;
+  static const Color amberWarning = warningColor;
 
   static ThemeData get lightTheme {
     return ThemeData(

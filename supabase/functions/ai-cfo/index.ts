@@ -40,6 +40,7 @@ serve(async (req: Request) => {
     const supabaseAnonKey = Deno.env.get("SUPABASE_ANON_KEY") ?? "";
     const supabaseServiceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") ?? supabaseAnonKey;
     const qoderApiKey = Deno.env.get("QODER_ACCESS_TOKEN") ?? Deno.env.get("QODER_API_KEY") ?? "";
+    const geminiApiKey = Deno.env.get("GEMINI_API_KEY") ?? Deno.env.get("GOOGLE_API_KEY") ?? "";
 
     // 1. Authenticate user from JWT
     const supabase = createClient(supabaseUrl, supabaseAnonKey, {
@@ -147,10 +148,40 @@ CRITICAL OPERATING RULES:
 4. SIMPLE LANGUAGE: Speak clearly without unnecessary accounting jargon. Be encouraging, precise, and strategic.
 5. DISCLAIMER: You are an AI financial advisor, not a CPA, auditor, or legal counsel.`;
 
-    // 6. Call Qoder Cloud Agents API or AI Engine
+    // 6. Call Live AI Engine (Gemini / Qoder)
     let assistantReply = "";
 
-    if (qoderApiKey) {
+    if (geminiApiKey) {
+      try {
+        const geminiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-flash-lite-latest:generateContent?key=${geminiApiKey}`;
+        const geminiRes = await fetch(geminiUrl, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            system_instruction: { parts: [{ text: systemInstruction }] },
+            contents: [
+              {
+                role: "user",
+                parts: [
+                  {
+                    text: `Financial Context:\n${JSON.stringify(financialContext, null, 2)}\n\nUser Question:\n${message}`,
+                  },
+                ],
+              },
+            ],
+          }),
+        });
+
+        if (geminiRes.ok) {
+          const geminiData = await geminiRes.json();
+          assistantReply = geminiData.candidates?.[0]?.content?.parts?.[0]?.text ?? "";
+        }
+      } catch (_e) {
+        // Fall through
+      }
+    }
+
+    if (!assistantReply && qoderApiKey) {
       try {
         const qoderEndpoint = Deno.env.get("QODER_API_URL") || "https://api.qoder.ai/v1/agents/chat";
         const qoderRes = await fetch(qoderEndpoint, {
@@ -172,7 +203,7 @@ CRITICAL OPERATING RULES:
           assistantReply = qoderData.choices?.[0]?.message?.content || qoderData.response || qoderData.message;
         }
       } catch (_e) {
-        // Fallback to grounded server-side generation below
+        // Fall through
       }
     }
 
