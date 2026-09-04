@@ -2,10 +2,10 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 import '../domain/transaction.dart';
 
 class TransactionRepository {
-  TransactionRepository({SupabaseClient? client})
-    : _client = client ?? Supabase.instance.client;
+  TransactionRepository({SupabaseClient? client}) : _injectedClient = client;
 
-  final SupabaseClient _client;
+  final SupabaseClient? _injectedClient;
+  SupabaseClient get _client => _injectedClient ?? Supabase.instance.client;
 
   Future<List<Transaction>> getTransactions({
     required String businessId,

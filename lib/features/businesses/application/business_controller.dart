@@ -15,12 +15,34 @@ class BusinessController extends ChangeNotifier {
   String? _errorMessage;
   bool _isSubmitting = false;
 
+  bool _isDemoMode = false;
+
   BusinessState get state => _state;
   Business? get currentBusiness => _currentBusiness;
   String? get errorMessage => _errorMessage;
   bool get isSubmitting => _isSubmitting;
+  bool get isDemoMode => _isDemoMode;
+
+  /// Activates the in-memory isolated demo business mode for hackathon review.
+  void loadDemoMode(Business demoBusiness) {
+    _isDemoMode = true;
+    _currentBusiness = demoBusiness;
+    _state = BusinessState.hasBusiness;
+    _errorMessage = null;
+    notifyListeners();
+  }
+
+  /// Exits demo mode and resets to authenticated user state.
+  void exitDemoMode() {
+    _isDemoMode = false;
+    _currentBusiness = null;
+    _state = BusinessState.initial;
+    _errorMessage = null;
+    notifyListeners();
+  }
 
   Future<void> loadUserBusiness() async {
+    _isDemoMode = false;
     _state = BusinessState.loading;
     _errorMessage = null;
     notifyListeners();
@@ -49,6 +71,7 @@ class BusinessController extends ChangeNotifier {
     required int fiscalYearStartMonth,
     required double startingCash,
   }) async {
+    _isDemoMode = false;
     _isSubmitting = true;
     _errorMessage = null;
     notifyListeners();
@@ -76,6 +99,7 @@ class BusinessController extends ChangeNotifier {
   }
 
   void reset() {
+    _isDemoMode = false;
     _state = BusinessState.initial;
     _currentBusiness = null;
     _errorMessage = null;

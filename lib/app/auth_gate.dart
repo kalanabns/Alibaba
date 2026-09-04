@@ -50,8 +50,15 @@ class _AuthGateState extends State<AuthGate> {
   @override
   Widget build(BuildContext context) {
     return ListenableBuilder(
-      listenable: widget.authController,
+      listenable: Listenable.merge([widget.authController, widget.businessController]),
       builder: (context, _) {
+        if (widget.businessController.isDemoMode) {
+          return AuthenticatedAppShell(
+            authController: widget.authController,
+            businessController: widget.businessController,
+          );
+        }
+
         final authStatus = widget.authController.status;
 
         if (authStatus == AuthStatus.initial ||
@@ -62,14 +69,14 @@ class _AuthGateState extends State<AuthGate> {
         }
 
         if (authStatus == AuthStatus.unauthenticated) {
-          return LoginScreen(authController: widget.authController);
+          return LoginScreen(
+            authController: widget.authController,
+            businessController: widget.businessController,
+          );
         }
 
         // User is authenticated, evaluate business state
-        return ListenableBuilder(
-          listenable: widget.businessController,
-          builder: (context, _) {
-            final businessState = widget.businessController.state;
+        final businessState = widget.businessController.state;
 
             switch (businessState) {
               case BusinessState.initial:
@@ -104,8 +111,6 @@ class _AuthGateState extends State<AuthGate> {
                   ),
                 );
             }
-          },
-        );
       },
     );
   }

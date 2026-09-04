@@ -7,13 +7,17 @@ import '../features/alerts/domain/alert.dart';
 import '../features/alerts/presentation/alerts_screen.dart';
 import '../features/authentication/application/auth_controller.dart';
 import '../features/businesses/application/business_controller.dart';
+import '../features/businesses/data/demo_business_service.dart';
 import '../features/financial_health/application/financial_health_controller.dart';
 import '../features/financial_health/presentation/dashboard_screen.dart';
 import '../features/forecasts/application/forecast_controller.dart';
 import '../features/forecasts/presentation/forecast_screen.dart';
 import '../features/simulations/presentation/simulations_screen.dart';
+import '../features/transactions/application/sms_ingestion_controller.dart';
 import '../features/transactions/application/transaction_controller.dart';
+import '../features/transactions/presentation/sms_review_screen.dart';
 import '../features/transactions/presentation/transactions_screen.dart';
+import '../shared/widgets/onboarding_guide_dialog.dart';
 
 class AuthenticatedAppShell extends StatefulWidget {
   const AuthenticatedAppShell({
@@ -36,6 +40,7 @@ class _AuthenticatedAppShellState extends State<AuthenticatedAppShell> {
   late final AlertsController _alertsController;
   late final AICFOController _aiCfoController;
   late final ForecastController _forecastController;
+  late final SmsIngestionController _smsController;
 
   Alert? _alertToExplainInAi;
 
@@ -53,15 +58,47 @@ class _AuthenticatedAppShellState extends State<AuthenticatedAppShell> {
       },
     );
 
+    _smsController = SmsIngestionController(
+      onTransactionsChanged: () {
+        final business = widget.businessController.currentBusiness;
+        if (business != null) {
+          _transactionController.loadTransactions(businessId: business.id).then((_) {
+            _syncAllEngines(silent: true);
+          });
+        }
+      },
+    );
+
     final business = widget.businessController.currentBusiness;
     if (business != null) {
-      _transactionController.loadTransactions(businessId: business.id).then((
-        _,
-      ) {
-        _syncAllEngines(silent: false);
-      });
-      _aiCfoController.loadHistory(businessId: business.id);
+      if (widget.businessController.isDemoMode) {
+        _loadDemoState();
+      } else {
+        _transactionController.loadTransactions(businessId: business.id).then((
+          _,
+        ) {
+          _syncAllEngines(silent: false);
+        });
+        _aiCfoController.loadHistory(businessId: business.id);
+      }
     }
+  }
+
+  void _loadDemoState() {
+    final demo = DemoBusinessService.getDemoData();
+    _transactionController.loadInMemoryTransactions(demo.transactions);
+    _alertsController.loadInMemoryAlerts(demo.alerts);
+    _healthController.recalculate(
+      businessId: demo.business.id,
+      allTransactions: demo.transactions,
+      silent: true,
+    );
+    _forecastController.generateAndSyncForecasts(
+      businessId: demo.business.id,
+      buckets: demo.buckets,
+      startingCash: demo.business.startingCash,
+      silent: true,
+    );
   }
 
   void _syncAllEngines({bool silent = false}) {
@@ -106,6 +143,7 @@ class _AuthenticatedAppShellState extends State<AuthenticatedAppShell> {
     _alertsController.dispose();
     _aiCfoController.dispose();
     _forecastController.dispose();
+    _smsController.dispose();
     super.dispose();
   }
 
@@ -153,6 +191,22 @@ class _AuthenticatedAppShellState extends State<AuthenticatedAppShell> {
           business: business,
           transactionsController: _transactionController,
           currentMetric: _healthController.currentMetric,
+        ),
+      ),
+    );
+  }
+
+  void _openSmsReviewScreen(BuildContext context) {
+    final business = widget.businessController.currentBusiness;
+    if (business == null) return;
+
+    Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (_) => SmsReviewScreen(
+          controller: _smsController,
+          business: business,
+          existingTransactions: _transactionController.transactions,
         ),
       ),
     );
@@ -214,6 +268,8 @@ class _AuthenticatedAppShellState extends State<AuthenticatedAppShell> {
             controller: _transactionController,
             businessId: business.id,
             currency: business.currency,
+            business: business,
+            smsController: _smsController,
           ),
           AICFOScreen(
             controller: _aiCfoController,
@@ -226,6 +282,8 @@ class _AuthenticatedAppShellState extends State<AuthenticatedAppShell> {
           AlertsScreen(
             controller: _alertsController,
             businessId: business.id,
+            business: business,
+            currentMetrics: _healthController.currentMetric,
             onAskAiAboutAlert: _navigateToAiCfoWithAlert,
           ),
           _buildSettingsTab(context),
@@ -251,29 +309,66 @@ class _AuthenticatedAppShellState extends State<AuthenticatedAppShell> {
                   ),
                 ),
                 const SizedBox(width: 10),
-                Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      business.name,
-                      style: const TextStyle(
-                        fontSize: 16,
-                        fontWeight: FontWeight.bold,
-                        color: Colors.white,
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Row(
+                        children: [
+                          Flexible(
+                            child: Text(
+                              business.name,
+                              style: const TextStyle(
+                                fontSize: 16,
+                                fontWeight: FontWeight.bold,
+                                color: Colors.white,
+                              ),
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
+                            ),
+                          ),
+                          if (widget.businessController.isDemoMode) ...[
+                            const SizedBox(width: 6),
+                            Container(
+                              padding: const EdgeInsets.symmetric(horizontal: 5, vertical: 2),
+                              decoration: BoxDecoration(
+                                color: Colors.amber.shade800,
+                                borderRadius: BorderRadius.circular(4),
+                              ),
+                              child: const Text(
+                                'DEMO',
+                                style: TextStyle(
+                                  color: Colors.white,
+                                  fontSize: 9,
+                                  fontWeight: FontWeight.bold,
+                                ),
+                              ),
+                            ),
+                          ],
+                        ],
                       ),
-                    ),
-                    Text(
-                      '${business.currency} • ${business.industry ?? "General"}',
-                      style: const TextStyle(
-                        fontSize: 11,
-                        color: Color(0xFF94A3B8),
+                      Text(
+                        '${business.currency} • ${business.industry ?? "General"}',
+                        style: const TextStyle(
+                          fontSize: 11,
+                          color: Color(0xFF94A3B8),
+                        ),
                       ),
-                    ),
-                  ],
+                    ],
+                  ),
                 ),
               ],
             ),
             actions: [
+              IconButton(
+                icon: const Icon(
+                  Icons.help_outline_rounded,
+                  color: Colors.white70,
+                  size: 20,
+                ),
+                tooltip: 'Product Guide',
+                onPressed: () => OnboardingGuideDialog.show(context),
+              ),
               IconButton(
                 icon: const Icon(
                   Icons.auto_graph_rounded,
@@ -293,13 +388,17 @@ class _AuthenticatedAppShellState extends State<AuthenticatedAppShell> {
                 onPressed: () => _openSimulationsScreen(context),
               ),
               IconButton(
-                icon: const Icon(
-                  Icons.logout_rounded,
+                icon: Icon(
+                  widget.businessController.isDemoMode ? Icons.exit_to_app_rounded : Icons.logout_rounded,
                   color: Colors.white70,
                   size: 20,
                 ),
-                tooltip: 'Log Out',
-                onPressed: _handleSignOut,
+                tooltip: widget.businessController.isDemoMode ? 'Exit Demo' : 'Log Out',
+                onPressed: widget.businessController.isDemoMode
+                    ? () {
+                        widget.businessController.exitDemoMode();
+                      }
+                    : _handleSignOut,
               ),
             ],
           ),
@@ -461,15 +560,174 @@ class _AuthenticatedAppShellState extends State<AuthenticatedAppShell> {
             ],
           ),
         ),
+        const SizedBox(height: 20),
+
+        // Automations & Ingestion Section
+        const Text(
+          'Automations & Ingestion',
+          style: TextStyle(
+            fontSize: 20,
+            fontWeight: FontWeight.bold,
+            color: AppTheme.textPrimary,
+          ),
+        ),
+        const SizedBox(height: 16),
+        Container(
+          decoration: BoxDecoration(
+            color: AppTheme.surface,
+            borderRadius: BorderRadius.circular(16),
+            border: Border.all(color: AppTheme.borderColor),
+            boxShadow: [
+              BoxShadow(
+                color: Colors.black.withValues(alpha: 0.03),
+                blurRadius: 8,
+                offset: const Offset(0, 2),
+              ),
+            ],
+          ),
+          child: Column(
+            children: [
+              ListTile(
+                leading: const Icon(
+                  Icons.sms_outlined,
+                  color: AppTheme.primaryLight,
+                ),
+                title: const Text(
+                  'Android SMS Ingestion',
+                  style: TextStyle(
+                    fontSize: 15,
+                    fontWeight: FontWeight.w600,
+                    color: AppTheme.textPrimary,
+                  ),
+                ),
+                subtitle: const Text(
+                  'Detect incoming bank & wallet SMS transactions',
+                  style: TextStyle(fontSize: 12, color: AppTheme.textSecondary),
+                ),
+                trailing: Switch(
+                  value: _smsController.isIngestionEnabled,
+                  activeThumbColor: AppTheme.primaryLight,
+                  onChanged: (val) {
+                    setState(() {
+                      _smsController.toggleIngestion(val);
+                    });
+                  },
+                ),
+              ),
+              const Divider(height: 1),
+              ListTile(
+                leading: const Icon(
+                  Icons.fact_check_outlined,
+                  color: AppTheme.textSecondary,
+                ),
+                title: const Text(
+                  'Review SMS Candidates',
+                  style: TextStyle(fontSize: 14, color: AppTheme.textPrimary),
+                ),
+                subtitle: Text(
+                  '${_smsController.pendingCandidates.length} pending approval',
+                  style: const TextStyle(fontSize: 12, color: AppTheme.textSecondary),
+                ),
+                trailing: const Icon(
+                  Icons.arrow_forward_ios_rounded,
+                  size: 14,
+                  color: AppTheme.textSecondary,
+                ),
+                onTap: () => _openSmsReviewScreen(context),
+              ),
+            ],
+          ),
+        ),
+        const SizedBox(height: 20),
+
+        // Product Guide & Presentation Tools
+        const Text(
+          'Product Guide & Presentation',
+          style: TextStyle(
+            fontSize: 20,
+            fontWeight: FontWeight.bold,
+            color: AppTheme.textPrimary,
+          ),
+        ),
+        const SizedBox(height: 16),
+        Container(
+          decoration: BoxDecoration(
+            color: AppTheme.surface,
+            borderRadius: BorderRadius.circular(16),
+            border: Border.all(color: AppTheme.borderColor),
+            boxShadow: [
+              BoxShadow(
+                color: Colors.black.withValues(alpha: 0.03),
+                blurRadius: 8,
+                offset: const Offset(0, 2),
+              ),
+            ],
+          ),
+          child: Column(
+            children: [
+              ListTile(
+                leading: const Icon(
+                  Icons.menu_book_outlined,
+                  color: AppTheme.primaryLight,
+                ),
+                title: const Text(
+                  '4-Pillar Architecture Guide',
+                  style: TextStyle(
+                    fontSize: 15,
+                    fontWeight: FontWeight.w600,
+                    color: AppTheme.textPrimary,
+                  ),
+                ),
+                subtitle: const Text(
+                  'Review deterministic engine, What-If simulator, and AI CFO concepts',
+                  style: TextStyle(fontSize: 12, color: AppTheme.textSecondary),
+                ),
+                trailing: const Icon(Icons.arrow_forward_ios_rounded, size: 14, color: AppTheme.textSecondary),
+                onTap: () => OnboardingGuideDialog.show(context),
+              ),
+              const Divider(height: 1),
+              ListTile(
+                leading: const Icon(
+                  Icons.science_outlined,
+                  color: AppTheme.warningColor,
+                ),
+                title: Text(
+                  widget.businessController.isDemoMode ? 'Exit Demo Mode' : 'Load Hackathon Demo Dataset',
+                  style: const TextStyle(
+                    fontSize: 15,
+                    fontWeight: FontWeight.w600,
+                    color: AppTheme.textPrimary,
+                  ),
+                ),
+                subtitle: Text(
+                  widget.businessController.isDemoMode
+                      ? 'Currently running isolated sample SMB scenario'
+                      : 'Test Pacific Coast Roasters scenario (revenue growth with expense surge)',
+                  style: const TextStyle(fontSize: 12, color: AppTheme.textSecondary),
+                ),
+                trailing: const Icon(Icons.arrow_forward_ios_rounded, size: 14, color: AppTheme.textSecondary),
+                onTap: () {
+                  if (widget.businessController.isDemoMode) {
+                    widget.businessController.exitDemoMode();
+                  } else {
+                    final demo = DemoBusinessService.getDemoData();
+                    widget.businessController.loadDemoMode(demo.business);
+                    _loadDemoState();
+                  }
+                },
+              ),
+            ],
+          ),
+        ),
         const SizedBox(height: 24),
         OutlinedButton.icon(
-          onPressed: _handleSignOut,
+          onPressed: widget.businessController.isDemoMode ? widget.businessController.exitDemoMode : _handleSignOut,
           style: OutlinedButton.styleFrom(
             foregroundColor: AppTheme.errorColor,
             side: const BorderSide(color: AppTheme.errorColor),
           ),
-          icon: const Icon(Icons.logout_rounded, size: 18),
-          label: const Text('Log Out of Finora'),
+          icon: Icon(widget.businessController.isDemoMode ? Icons.exit_to_app_rounded : Icons.logout_rounded, size: 18),
+          label: Text(widget.businessController.isDemoMode ? 'Exit Demo Mode' : 'Log Out of Finora'),
         ),
       ],
     );

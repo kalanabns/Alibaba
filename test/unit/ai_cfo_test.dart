@@ -1,4 +1,5 @@
 import 'package:flutter_test/flutter_test.dart';
+import 'package:alibaba/core/utilities/uuid_generator.dart';
 import 'package:alibaba/features/ai_cfo/application/ai_cfo_controller.dart';
 import 'package:alibaba/features/ai_cfo/data/ai_cfo_repository.dart';
 import 'package:alibaba/features/alerts/domain/alert.dart';
@@ -88,19 +89,89 @@ void main() {
 
       expect(reply, contains('What Happened'));
       expect(reply, contains('Why It Matters'));
-      expect(reply, contains('What I Recommend'));
+      expect(reply, contains('Recommended Actions'));
       expect(reply, contains('HIGH'));
     });
 
-    test('controller session reset clears conversation turns', () {
+    test('generates hiring affordability decision advice', () {
+      final reply = AICFORepository.generateAdvisoryResponse(
+        message: 'Can I afford to hire a new staff member?',
+        metric: testMetric,
+        business: testBiz,
+      );
+
+      expect(reply, contains('What Happened'));
+      expect(reply, contains('payroll'));
+      expect(reply, contains('What-If Simulator'));
+      expect(reply, contains('Recommended Actions'));
+    });
+
+    test('generates forward cash forecast advice', () {
+      final reply = AICFORepository.generateAdvisoryResponse(
+        message: 'How much cash will I have next month?',
+        metric: testMetric,
+        business: testBiz,
+      );
+
+      expect(reply, contains('Forecasts'));
+      expect(reply, contains('receivables'));
+      expect(reply, contains('Expected Impact'));
+    });
+
+    test('generates pricing scenario advice for 5% price increase', () {
+      final reply = AICFORepository.generateAdvisoryResponse(
+        message: 'What happens if I increase prices by 5%?',
+        metric: testMetric,
+        business: testBiz,
+      );
+
+      expect(reply, contains('5% price adjustment'));
+      expect(reply, contains('What-If Simulator'));
+      expect(reply, contains('Top Risks'));
+    });
+
+    test('handles insufficient data gracefully without throwing', () {
+      final reply = AICFORepository.generateAdvisoryResponse(
+        message: 'How is my business doing?',
+        metric: null,
+        business: testBiz,
+      );
+
+      expect(reply, contains('insufficient financial history'));
+      expect(reply, contains('Transactions'));
+    });
+
+    test('controller session reset clears conversation turns and generates valid UUID', () {
       final controller = AICFOController();
       final initialSession = controller.sessionId;
+
+      expect(UuidUtils.isValidUuid(initialSession), isTrue);
 
       controller.resetSession(businessId);
 
       expect(controller.sessionId, isNot(equals(initialSession)));
+      expect(UuidUtils.isValidUuid(controller.sessionId), isTrue);
       expect(controller.messages, isEmpty);
       expect(controller.errorMessage, isNull);
+    });
+
+    test('controller handles invalid session ID by normalizing to valid UUID', () {
+      final controller = AICFOController(sessionId: 'sess_1788505271405_305756');
+      expect(UuidUtils.isValidUuid(controller.sessionId), isTrue);
+      expect(controller.sessionId, isNot(contains('sess_')));
+    });
+
+    test('UuidUtils generates compliant RFC 4122 v4 UUID and validates correctly', () {
+      final uuid = UuidUtils.generate();
+      expect(UuidUtils.isValidUuid(uuid), isTrue);
+      expect(uuid.length, equals(36));
+      expect(uuid[14], equals('4')); // Version 4
+      expect(['8', '9', 'a', 'b'], contains(uuid[19].toLowerCase())); // Variant 1
+
+      expect(UuidUtils.isValidUuid('sess_1788505271405_305756'), isFalse);
+      expect(UuidUtils.isValidUuid(''), isFalse);
+      expect(UuidUtils.isValidUuid(null), isFalse);
+      expect(UuidUtils.isValidUuid('12345'), isFalse);
     });
   });
 }

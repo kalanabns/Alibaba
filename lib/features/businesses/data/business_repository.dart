@@ -2,10 +2,10 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 import '../domain/business.dart';
 
 class BusinessRepository {
-  BusinessRepository({SupabaseClient? client})
-    : _client = client ?? Supabase.instance.client;
+  BusinessRepository({SupabaseClient? client}) : _injectedClient = client;
 
-  final SupabaseClient _client;
+  final SupabaseClient? _injectedClient;
+  SupabaseClient get _client => _injectedClient ?? Supabase.instance.client;
 
   Future<Business?> getCurrentUserBusiness() async {
     final userId = _client.auth.currentUser?.id;

@@ -60,6 +60,14 @@ class TransactionController extends ChangeNotifier {
     notifyListeners();
   }
 
+  /// Injects memory-only transactions for safe demo mode without Supabase writes.
+  void loadInMemoryTransactions(List<Transaction> transactions) {
+    _transactions = transactions;
+    _state = TransactionListState.loaded;
+    _errorMessage = null;
+    notifyListeners();
+  }
+
   void setTypeFilter(TransactionType? type, {required String businessId}) {
     _selectedTypeFilter = type;
     loadTransactions(businessId: businessId);

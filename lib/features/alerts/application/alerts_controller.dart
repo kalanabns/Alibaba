@@ -1,4 +1,5 @@
 import 'package:flutter/foundation.dart';
+import '../../businesses/domain/business.dart';
 import '../../financial_health/domain/financial_metric.dart';
 import '../../transactions/domain/transaction.dart';
 import '../data/alert_repository.dart';
@@ -6,7 +7,21 @@ import '../domain/alert.dart';
 import '../domain/opportunity_engine.dart';
 import '../domain/risk_engine.dart';
 
-enum AlertsFilter { all, risks, opportunities, unread }
+enum AlertsFilter { all, critical, risks, opportunities, unread }
+
+class FinancialCheckIn {
+  const FinancialCheckIn({
+    required this.priority,
+    required this.watch,
+    required this.opportunity,
+    required this.action,
+  });
+
+  final String priority;
+  final String watch;
+  final String opportunity;
+  final String action;
+}
 
 class AlertsController extends ChangeNotifier {
   AlertsController({AlertRepository? repository})
@@ -24,10 +39,21 @@ class AlertsController extends ChangeNotifier {
   List<Alert> get allAlerts => _alerts;
   AlertsFilter get selectedFilter => _selectedFilter;
 
+  /// Loads memory-only alerts for safe demo mode.
+  void loadInMemoryAlerts(List<Alert> alerts) {
+    _alerts = alerts;
+    _errorMessage = null;
+    notifyListeners();
+  }
+
   List<Alert> get filteredAlerts {
     switch (_selectedFilter) {
       case AlertsFilter.all:
         return _alerts;
+      case AlertsFilter.critical:
+        return _alerts
+            .where((a) => a.severity == AlertSeverity.critical && !a.isRead)
+            .toList();
       case AlertsFilter.risks:
         return _alerts.where((a) => a.isRisk).toList();
       case AlertsFilter.opportunities:
@@ -37,6 +63,10 @@ class AlertsController extends ChangeNotifier {
     }
   }
 
+  List<Alert> get criticalAlerts => _alerts
+      .where((a) => a.severity == AlertSeverity.critical && !a.isRead)
+      .toList();
+
   List<Alert> get topRisks =>
       _alerts.where((a) => a.isRisk && !a.isRead).take(3).toList();
 
@@ -44,10 +74,76 @@ class AlertsController extends ChangeNotifier {
       _alerts.where((a) => a.isOpportunity && !a.isRead).take(3).toList();
 
   int get unreadCount => _alerts.where((a) => !a.isRead).length;
+  int get criticalCount =>
+      _alerts.where((a) => a.severity == AlertSeverity.critical && !a.isRead).length;
   int get activeRisksCount =>
       _alerts.where((a) => a.isRisk && !a.isRead).length;
   int get activeOpportunitiesCount =>
       _alerts.where((a) => a.isOpportunity && !a.isRead).length;
+
+  /// Generates a structured proactive financial check-in summary.
+  FinancialCheckIn generateDailyCheckIn({
+    required Business business,
+    FinancialMetric? metric,
+  }) {
+    if (metric == null || (metric.revenue == 0 && metric.expenses == 0)) {
+      return const FinancialCheckIn(
+        priority: 'Import financial records to establish baseline metrics.',
+        watch: 'Workspace is ready for transaction statements.',
+        opportunity: 'Sync CSV or SMS transactions to activate AI CFO diagnostics.',
+        action: 'Add transactions or import CSV bank statements.',
+      );
+    }
+
+    final hasCriticalRisks = criticalCount > 0;
+    final isLoss = metric.profit < 0;
+    final isNegativeCash = metric.netCashFlow < 0;
+
+    String priorityText;
+    if (hasCriticalRisks) {
+      priorityText = criticalAlerts.first.title;
+    } else if (isNegativeCash) {
+      priorityText = 'Operating cash burn requires immediate liquidity defense.';
+    } else if (isLoss) {
+      priorityText = 'Operating deficit this period requires cost containment.';
+    } else {
+      priorityText = 'Protect profit margins and maintain collection velocity.';
+    }
+
+    String watchText;
+    if (metric.expenseGrowth > 10) {
+      watchText = 'Expenses grew +${metric.expenseGrowth.toStringAsFixed(1)}% vs prior period.';
+    } else if (metric.receivables > 0) {
+      watchText = '\$${metric.receivables.toStringAsFixed(2)} in receivables pending collection.';
+    } else {
+      watchText = 'Operating overhead stable. Keep monitoring monthly discretionary spending.';
+    }
+
+    String oppText;
+    if (activeOpportunitiesCount > 0) {
+      oppText = topOpportunities.first.title;
+    } else if (metric.profitMargin > 20) {
+      oppText = 'Strong ${metric.profitMargin.toStringAsFixed(1)}% margin supports measured client acquisition.';
+    } else {
+      oppText = 'Review top expense categories to negotiate supplier volume discounts.';
+    }
+
+    String actionText;
+    if (hasCriticalRisks) {
+      actionText = criticalAlerts.first.recommendation ?? 'Review critical signals in the Action Center.';
+    } else if (metric.receivables > 0) {
+      actionText = 'Issue payment reminders for pending customer invoices.';
+    } else {
+      actionText = 'Review weekly cash outflow commitments against revenue targets.';
+    }
+
+    return FinancialCheckIn(
+      priority: priorityText,
+      watch: watchText,
+      opportunity: oppText,
+      action: actionText,
+    );
+  }
 
   void setFilter(AlertsFilter filter) {
     if (_selectedFilter != filter) {

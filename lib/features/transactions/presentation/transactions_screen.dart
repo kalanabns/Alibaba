@@ -2,11 +2,14 @@ import 'package:flutter/material.dart';
 import '../../../core/theme/app_theme.dart';
 import '../../../shared/widgets/finora_error_view.dart';
 import '../../../shared/widgets/finora_loading_indicator.dart';
+import '../../businesses/domain/business.dart';
+import '../application/sms_ingestion_controller.dart';
 import '../application/transaction_controller.dart';
 import '../data/csv_parser.dart';
 import '../domain/transaction.dart';
 import 'add_edit_transaction_dialog.dart';
 import 'csv_import_flow.dart';
+import 'sms_review_screen.dart';
 import 'widgets/transaction_tile.dart';
 
 class TransactionsScreen extends StatefulWidget {
@@ -15,11 +18,15 @@ class TransactionsScreen extends StatefulWidget {
     required this.controller,
     required this.businessId,
     required this.currency,
+    this.business,
+    this.smsController,
   });
 
   final TransactionController controller;
   final String businessId;
   final String currency;
+  final Business? business;
+  final SmsIngestionController? smsController;
 
   @override
   State<TransactionsScreen> createState() => _TransactionsScreenState();
@@ -109,6 +116,20 @@ class _TransactionsScreenState extends State<TransactionsScreen> {
     );
   }
 
+  void _openSmsReviewScreen() {
+    if (widget.smsController == null || widget.business == null) return;
+    Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (_) => SmsReviewScreen(
+          controller: widget.smsController!,
+          business: widget.business!,
+          existingTransactions: widget.controller.transactions,
+        ),
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     return ListenableBuilder(
@@ -141,18 +162,41 @@ class _TransactionsScreenState extends State<TransactionsScreen> {
                                 onPressed: _openCsvImportWizard,
                                 icon: const Icon(
                                   Icons.file_upload_outlined,
-                                  size: 18,
+                                  size: 16,
                                   color: AppTheme.primaryLight,
                                 ),
-                                label: const Text('Import CSV'),
+                                label: const Text(
+                                  'Import CSV',
+                                  style: TextStyle(fontSize: 12),
+                                ),
                               ),
                             ),
-                            const SizedBox(width: 12),
+                            if (widget.smsController != null && widget.business != null) ...[
+                              const SizedBox(width: 8),
+                              Expanded(
+                                child: OutlinedButton.icon(
+                                  onPressed: _openSmsReviewScreen,
+                                  icon: const Icon(
+                                    Icons.sms_outlined,
+                                    size: 16,
+                                    color: AppTheme.primaryLight,
+                                  ),
+                                  label: const Text(
+                                    'SMS Ingest',
+                                    style: TextStyle(fontSize: 12),
+                                  ),
+                                ),
+                              ),
+                            ],
+                            const SizedBox(width: 8),
                             Expanded(
                               child: ElevatedButton.icon(
                                 onPressed: _openAddTransactionModal,
-                                icon: const Icon(Icons.add, size: 18),
-                                label: const Text('Add Manual'),
+                                icon: const Icon(Icons.add, size: 16),
+                                label: const Text(
+                                  'Add Manual',
+                                  style: TextStyle(fontSize: 12),
+                                ),
                               ),
                             ),
                           ],
