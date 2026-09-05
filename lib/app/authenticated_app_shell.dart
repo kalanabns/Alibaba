@@ -468,141 +468,144 @@ class _AuthenticatedAppShellState extends State<AuthenticatedAppShell> {
   PreferredSizeWidget _buildFuturisticHeader(BuildContext context, Business business) {
     return PreferredSize(
       preferredSize: const Size.fromHeight(128),
-      child: Container(
-        decoration: BoxDecoration(
-          gradient: const LinearGradient(
-            begin: Alignment.topLeft,
-            end: Alignment.bottomRight,
-            colors: [
-              Color(0xFF1D55D8),
-              Color(0xFF2563EB),
-              Color(0xFF3B82F6),
-              Color(0xFF4F46E5),
-            ],
-            stops: [0.0, 0.35, 0.70, 1.0],
-          ),
-          border: const Border(
-            bottom: BorderSide(color: Color(0x3338BDF8), width: 1.0),
-          ),
-          boxShadow: [
-            BoxShadow(
-              color: const Color(0xFF1D4ED8).withValues(alpha: 0.25),
-              blurRadius: 16,
-              offset: const Offset(0, 4),
+      child: Material(
+        color: Colors.transparent,
+        child: Container(
+          decoration: BoxDecoration(
+            gradient: const LinearGradient(
+              begin: Alignment.topLeft,
+              end: Alignment.bottomRight,
+              colors: [
+                Color(0xFF1D55D8),
+                Color(0xFF2563EB),
+                Color(0xFF3B82F6),
+                Color(0xFF4F46E5),
+              ],
+              stops: [0.0, 0.35, 0.70, 1.0],
             ),
-          ],
-        ),
-        child: SafeArea(
-          bottom: false,
-          child: Padding(
-            padding: const EdgeInsets.fromLTRB(16, 8, 16, 12),
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                // Top Profile & Action Row
-                Row(
-                  children: [
-                    // Glowing Glass Avatar
-                    Container(
-                      width: 46,
-                      height: 46,
-                      decoration: BoxDecoration(
-                        color: Colors.white.withValues(alpha: 0.18),
-                        borderRadius: BorderRadius.circular(16),
-                        border: Border.all(
-                          color: Colors.white.withValues(alpha: 0.25),
-                          width: 1.2,
+            border: const Border(
+              bottom: BorderSide(color: Color(0x3338BDF8), width: 1.0),
+            ),
+            boxShadow: [
+              BoxShadow(
+                color: const Color(0xFF1D4ED8).withValues(alpha: 0.25),
+                blurRadius: 16,
+                offset: const Offset(0, 4),
+              ),
+            ],
+          ),
+          child: SafeArea(
+            bottom: false,
+            child: Padding(
+              padding: const EdgeInsets.fromLTRB(16, 8, 16, 12),
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  // Top Profile & Action Row
+                  Row(
+                    children: [
+                      // Glowing Glass Avatar
+                      Container(
+                        width: 46,
+                        height: 46,
+                        decoration: BoxDecoration(
+                          color: Colors.white.withValues(alpha: 0.18),
+                          borderRadius: BorderRadius.circular(16),
+                          border: Border.all(
+                            color: Colors.white.withValues(alpha: 0.25),
+                            width: 1.2,
+                          ),
+                        ),
+                        child: const Icon(
+                          Icons.auto_awesome_rounded,
+                          color: Colors.white,
+                          size: 22,
                         ),
                       ),
-                      child: const Icon(
-                        Icons.auto_awesome_rounded,
-                        color: Colors.white,
-                        size: 22,
-                      ),
-                    ),
-                    const SizedBox(width: 12),
-                    // Business Title + Subtitle
-                    Expanded(
-                      child: GestureDetector(
-                        onTap: () => _showBusinessHubSheet(context, business),
-                        behavior: HitTestBehavior.opaque,
-                        child: Column(
-                          mainAxisAlignment: MainAxisAlignment.center,
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Row(
-                              mainAxisSize: MainAxisSize.min,
-                              children: [
-                                Flexible(
-                                  child: Text(
-                                    business.name,
-                                    style: const TextStyle(
-                                      fontSize: 18,
-                                      fontWeight: FontWeight.w700,
-                                      color: Colors.white,
-                                      letterSpacing: -0.2,
+                      const SizedBox(width: 12),
+                      // Business Title + Subtitle
+                      Expanded(
+                        child: GestureDetector(
+                          onTap: () => _showBusinessHubSheet(context, business),
+                          behavior: HitTestBehavior.opaque,
+                          child: Column(
+                            mainAxisAlignment: MainAxisAlignment.center,
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Row(
+                                mainAxisSize: MainAxisSize.min,
+                                children: [
+                                  Flexible(
+                                    child: Text(
+                                      business.name,
+                                      style: const TextStyle(
+                                        fontSize: 18,
+                                        fontWeight: FontWeight.w700,
+                                        color: Colors.white,
+                                        letterSpacing: -0.2,
+                                      ),
+                                      maxLines: 1,
+                                      overflow: TextOverflow.ellipsis,
                                     ),
-                                    maxLines: 1,
-                                    overflow: TextOverflow.ellipsis,
                                   ),
-                                ),
-                                const SizedBox(width: 4),
-                                Icon(
-                                  Icons.keyboard_arrow_down_rounded,
-                                  color: Colors.white.withValues(alpha: 0.9),
-                                  size: 20,
-                                ),
-                              ],
-                            ),
-                            const SizedBox(height: 2),
-                            Text(
-                              widget.businessController.isDemoMode
-                                  ? '${business.currency} • Demo Active'
-                                  : '${business.currency} • Transactions Sync Active',
-                              style: TextStyle(
-                                fontSize: 12.5,
-                                color: Colors.white.withValues(alpha: 0.82),
-                                fontWeight: FontWeight.w400,
+                                  const SizedBox(width: 4),
+                                  Icon(
+                                    Icons.keyboard_arrow_down_rounded,
+                                    color: Colors.white.withValues(alpha: 0.9),
+                                    size: 20,
+                                  ),
+                                ],
                               ),
-                              maxLines: 1,
-                              overflow: TextOverflow.ellipsis,
-                            ),
-                          ],
+                              const SizedBox(height: 2),
+                              Text(
+                                widget.businessController.isDemoMode
+                                    ? '${business.currency} • Demo Active'
+                                    : '${business.currency} • Transactions Sync Active',
+                                style: TextStyle(
+                                  fontSize: 12.5,
+                                  color: Colors.white.withValues(alpha: 0.82),
+                                  fontWeight: FontWeight.w400,
+                                ),
+                                maxLines: 1,
+                                overflow: TextOverflow.ellipsis,
+                              ),
+                            ],
+                          ),
                         ),
                       ),
-                    ),
-                    const SizedBox(width: 8),
-                    // Action / Exit Button
-                    Material(
-                      color: Colors.transparent,
-                      child: InkWell(
-                        onTap: widget.businessController.isDemoMode
-                            ? widget.businessController.exitDemoMode
-                            : _handleSignOut,
+                      const SizedBox(width: 8),
+                      // Action / Exit Button
+                      Material(
+                        color: Colors.transparent,
                         borderRadius: BorderRadius.circular(16),
-                        child: Container(
-                          width: 46,
-                          height: 46,
-                          decoration: BoxDecoration(
-                            color: Colors.white.withValues(alpha: 0.18),
-                            borderRadius: BorderRadius.circular(16),
-                            border: Border.all(
-                              color: Colors.white.withValues(alpha: 0.25),
-                              width: 1.2,
+                        child: InkWell(
+                          onTap: widget.businessController.isDemoMode
+                              ? widget.businessController.exitDemoMode
+                              : _handleSignOut,
+                          borderRadius: BorderRadius.circular(16),
+                          child: Ink(
+                            width: 46,
+                            height: 46,
+                            decoration: BoxDecoration(
+                              color: Colors.white.withValues(alpha: 0.18),
+                              borderRadius: BorderRadius.circular(16),
+                              border: Border.all(
+                                color: Colors.white.withValues(alpha: 0.25),
+                                width: 1.2,
+                              ),
                             ),
-                          ),
-                          child: Icon(
-                            widget.businessController.isDemoMode
-                                ? Icons.exit_to_app_rounded
-                                : Icons.logout_rounded,
-                            color: Colors.white,
-                            size: 20,
+                            child: Icon(
+                              widget.businessController.isDemoMode
+                                  ? Icons.exit_to_app_rounded
+                                  : Icons.logout_rounded,
+                              color: Colors.white,
+                              size: 20,
+                            ),
                           ),
                         ),
                       ),
-                    ),
-                  ],
-                ),
+                    ],
+                  ),
 
                 // Fine Translucent Divider Line
                 Container(
@@ -648,8 +651,9 @@ class _AuthenticatedAppShellState extends State<AuthenticatedAppShell> {
           ),
         ),
       ),
-    );
-  }
+    ),
+  );
+}
 
   Widget _buildActionPill({
     required IconData icon,
@@ -660,10 +664,11 @@ class _AuthenticatedAppShellState extends State<AuthenticatedAppShell> {
     return Expanded(
       child: Material(
         color: Colors.transparent,
+        borderRadius: BorderRadius.circular(14),
         child: InkWell(
           onTap: onTap,
           borderRadius: BorderRadius.circular(14),
-          child: Container(
+          child: Ink(
             padding: const EdgeInsets.symmetric(vertical: 8),
             decoration: BoxDecoration(
               color: Colors.white.withValues(alpha: 0.15),

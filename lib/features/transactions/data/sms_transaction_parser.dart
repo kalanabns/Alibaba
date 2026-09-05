@@ -5,7 +5,7 @@ import 'sms_reader_service.dart';
 class SmsTransactionParser {
   // Regex to match monetary amounts across global currency formats
   static final RegExp _amountRegex = RegExp(
-    r'(?:(?:[\$€£₹]|USD|EUR|GBP|INR|Rs\.?|AUD|CAD|AED|SGD)\s*([0-9]{1,3}(?:,[0-9]{3})*(?:\.[0-9]{1,2})?|[0-9]+(?:\.[0-9]{1,2})?)|(?:amount(?:\s+of)?\s*:?\s*(?:[\$€£₹]|USD|EUR|GBP|INR|Rs\.?)?\s*([0-9,]+(?:\.[0-9]{1,2})?))|([0-9]{1,3}(?:,[0-9]{3})*(?:\.[0-9]{1,2})?|[0-9]+(?:\.[0-9]{1,2})?)\s*(?:USD|EUR|GBP|INR|AED|SGD))',
+    r'(?:(?:[\$€£₹]|USD|EUR|GBP|INR|LKR|Rs\.?|AUD|CAD|AED|SGD)\s*([0-9]{1,3}(?:,[0-9]{3})*(?:\.[0-9]{1,2})?|[0-9]+(?:\.[0-9]{1,2})?)|(?:amount(?:\s+of)?\s*:?\s*(?:[\$€£₹]|USD|EUR|GBP|INR|LKR|Rs\.?)?\s*([0-9,]+(?:\.[0-9]{1,2})?))|([0-9]{1,3}(?:,[0-9]{3})*(?:\.[0-9]{1,2})?|[0-9]+(?:\.[0-9]{1,2})?)\s*(?:USD|EUR|GBP|INR|LKR|AED|SGD))',
     caseSensitive: false,
   );
 

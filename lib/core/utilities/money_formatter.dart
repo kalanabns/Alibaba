@@ -11,6 +11,7 @@ class MoneyFormatter {
     'SGD': 'S\$',
     'AUD': 'A\$',
     'CAD': 'C\$',
+    'LKR': 'Rs. ',
   };
 
   static String getCurrencySymbol(String currencyCode) {
