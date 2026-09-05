@@ -476,7 +476,7 @@ class _AuthenticatedAppShellState extends State<AuthenticatedAppShell> {
           ),
           boxShadow: [
             BoxShadow(
-              color: const Color(0xFF090E17).withValues(alpha: 0.35),
+              color: const Color(0xFF102D5E).withValues(alpha: 0.25),
               blurRadius: 16,
               offset: const Offset(0, 4),
             ),
@@ -667,18 +667,18 @@ class _AuthenticatedAppShellState extends State<AuthenticatedAppShell> {
         gradient: const LinearGradient(
           begin: Alignment.topLeft,
           end: Alignment.bottomRight,
-          colors: [Color(0xFF0F172A), Color(0xFF0A0F1D)],
+          colors: [Color(0xFF102A54), Color(0xFF16376D)],
         ),
         borderRadius: BorderRadius.circular(32),
         border: Border.all(color: const Color(0x3538BDF8), width: 1.2),
         boxShadow: [
           BoxShadow(
-            color: const Color(0xFF000000).withValues(alpha: 0.35),
+            color: const Color(0xFF102A54).withValues(alpha: 0.30),
             blurRadius: 24,
             offset: const Offset(0, 10),
           ),
           BoxShadow(
-            color: const Color(0xFF00E5FF).withValues(alpha: 0.10),
+            color: const Color(0xFF00E5FF).withValues(alpha: 0.12),
             blurRadius: 16,
             offset: const Offset(0, 2),
           ),

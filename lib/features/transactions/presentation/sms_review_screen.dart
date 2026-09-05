@@ -74,8 +74,17 @@ class _SmsReviewScreenState extends State<SmsReviewScreen> {
         return Scaffold(
           backgroundColor: AppTheme.background,
           appBar: AppBar(
-            backgroundColor: AppTheme.primaryNavy,
+            flexibleSpace: Container(
+              decoration: const BoxDecoration(
+                gradient: AppTheme.headerGradient,
+                border: Border(
+                  bottom: BorderSide(color: Color(0x3338BDF8), width: 1.2),
+                ),
+              ),
+            ),
+            backgroundColor: Colors.transparent,
             foregroundColor: Colors.white,
+            elevation: 0,
             title: const Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
@@ -84,7 +93,7 @@ class _SmsReviewScreenState extends State<SmsReviewScreen> {
                   style: TextStyle(fontSize: 17, fontWeight: FontWeight.bold),
                 ),
                 Text(
-                  'Android automated bank statement detection',
+                  'Automated bank statement detection',
                   style: TextStyle(fontSize: 11, color: Color(0xFF94A3B8)),
                 ),
               ],

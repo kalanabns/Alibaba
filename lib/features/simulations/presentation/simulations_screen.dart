@@ -124,21 +124,29 @@ class _SimulationsScreenState extends State<SimulationsScreen> {
     return Scaffold(
       backgroundColor: AppTheme.canvasWhite,
       appBar: AppBar(
-        backgroundColor: AppTheme.navyDeep,
+        flexibleSpace: Container(
+          decoration: const BoxDecoration(
+            gradient: AppTheme.headerGradient,
+            border: Border(
+              bottom: BorderSide(color: Color(0x3338BDF8), width: 1.2),
+            ),
+          ),
+        ),
+        backgroundColor: Colors.transparent,
         foregroundColor: Colors.white,
         elevation: 0,
         title: const Text(
-          'What-If Scenario Simulator',
-          style: TextStyle(fontWeight: FontWeight.w700, fontSize: 18),
+          'What-If Simulator',
+          style: TextStyle(fontWeight: FontWeight.w700, fontSize: 17, color: Colors.white),
         ),
         actions: [
           IconButton(
-            icon: const Icon(Icons.history_rounded),
+            icon: const Icon(Icons.history_rounded, size: 20),
             tooltip: 'Saved Simulations',
             onPressed: () => _showSavedSimulationsSheet(context),
           ),
           IconButton(
-            icon: const Icon(Icons.bookmark_add_outlined),
+            icon: const Icon(Icons.bookmark_add_outlined, size: 20),
             tooltip: 'Save Current Scenario',
             onPressed: () => _saveCurrentScenario(context),
           ),
@@ -167,12 +175,12 @@ class _SimulationsScreenState extends State<SimulationsScreen> {
                     style: TextStyle(
                       fontSize: 12,
                       fontWeight: FontWeight.w800,
-                      letterSpacing: 1.0,
+                      letterSpacing: 0.8,
                       color: AppTheme.navyPrimary,
                     ),
                   ),
                   Text(
-                    'Based on ${business.name} Financials',
+                    'Based on ${business.name}',
                     style: const TextStyle(
                       fontSize: 12,
                       color: AppTheme.textSecondary,
@@ -249,10 +257,10 @@ class _SimulationsScreenState extends State<SimulationsScreen> {
               ),
             ),
             selected: isSelected,
-            selectedColor: AppTheme.navyPrimary,
+            selectedColor: AppTheme.primaryColor,
             backgroundColor: Colors.white,
             side: BorderSide(
-              color: isSelected ? AppTheme.navyPrimary : AppTheme.cardBorder,
+              color: isSelected ? AppTheme.primaryColor : AppTheme.cardBorder,
             ),
             onSelected: (selected) {
               if (selected) {
@@ -292,21 +300,26 @@ class _SimulationsScreenState extends State<SimulationsScreen> {
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              Text(
-                _controller.scenarioName,
-                style: const TextStyle(
-                  fontSize: 16,
-                  fontWeight: FontWeight.w700,
-                  color: AppTheme.navyDeep,
+              Expanded(
+                child: Text(
+                  _controller.scenarioName,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: const TextStyle(
+                    fontSize: 16,
+                    fontWeight: FontWeight.w700,
+                    color: AppTheme.navyDeep,
+                  ),
                 ),
               ),
+              const SizedBox(width: 8),
               Container(
                 padding: const EdgeInsets.symmetric(
                   horizontal: 10,
                   vertical: 4,
                 ),
                 decoration: BoxDecoration(
-                  color: AppTheme.navyPrimary.withAlpha(20),
+                  color: AppTheme.primaryColor.withAlpha(25),
                   borderRadius: BorderRadius.circular(20),
                 ),
                 child: Text(
@@ -316,7 +329,7 @@ class _SimulationsScreenState extends State<SimulationsScreen> {
                   style: const TextStyle(
                     fontSize: 13,
                     fontWeight: FontWeight.w800,
-                    color: AppTheme.navyPrimary,
+                    color: AppTheme.primaryColor,
                   ),
                 ),
               ),
@@ -422,7 +435,7 @@ class _SimulationsScreenState extends State<SimulationsScreen> {
           physics: const NeverScrollableScrollPhysics(),
           mainAxisSpacing: 10,
           crossAxisSpacing: 10,
-          childAspectRatio: 1.45,
+          childAspectRatio: 1.28,
           children: [
             SimulationDeltaCard(
               title: 'Revenue',
@@ -505,7 +518,7 @@ class _SimulationsScreenState extends State<SimulationsScreen> {
               ),
               SizedBox(width: 8),
               Text(
-                'Deterministic Model Summary',
+                'Model Summary',
                 style: TextStyle(
                   fontWeight: FontWeight.w700,
                   fontSize: 14,
@@ -526,7 +539,7 @@ class _SimulationsScreenState extends State<SimulationsScreen> {
           if (result.tradeOffs.isNotEmpty) ...[
             const SizedBox(height: 12),
             const Text(
-              'Key Strategic Trade-offs:',
+              'Strategic Trade-offs:',
               style: TextStyle(
                 fontWeight: FontWeight.w600,
                 fontSize: 12,
@@ -574,16 +587,17 @@ class _SimulationsScreenState extends State<SimulationsScreen> {
     return Container(
       padding: const EdgeInsets.all(18),
       decoration: BoxDecoration(
-        gradient: LinearGradient(
-          colors: const [AppTheme.navyDeep, AppTheme.navyPrimary],
+        gradient: const LinearGradient(
+          colors: [Color(0xFF102E5C), Color(0xFF1D4ED8)],
           begin: Alignment.topLeft,
           end: Alignment.bottomRight,
         ),
         borderRadius: BorderRadius.circular(18),
+        border: Border.all(color: const Color(0x3538BDF8), width: 1.2),
         boxShadow: const [
           BoxShadow(
-            color: Color(0x1A0F2B48),
-            blurRadius: 12,
+            color: Color(0x201D4ED8),
+            blurRadius: 14,
             offset: Offset(0, 4),
           ),
         ],
@@ -592,48 +606,52 @@ class _SimulationsScreenState extends State<SimulationsScreen> {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              Row(
-                children: [
-                  Container(
-                    padding: const EdgeInsets.all(6),
-                    decoration: BoxDecoration(
-                      color: AppTheme.tealAccent.withAlpha(50),
-                      borderRadius: BorderRadius.circular(8),
-                    ),
-                    child: const Icon(
-                      Icons.auto_awesome_rounded,
-                      color: AppTheme.tealAccent,
-                      size: 18,
-                    ),
-                  ),
-                  const SizedBox(width: 10),
-                  const Text(
-                    'AI CFO Trade-off Advisor',
-                    style: TextStyle(
-                      color: Colors.white,
-                      fontSize: 15,
-                      fontWeight: FontWeight.w700,
-                    ),
-                  ),
-                ],
+              Container(
+                padding: const EdgeInsets.all(6),
+                decoration: BoxDecoration(
+                  color: AppTheme.cyberCyan.withValues(alpha: 0.20),
+                  borderRadius: BorderRadius.circular(8),
+                ),
+                child: const Icon(
+                  Icons.auto_awesome_rounded,
+                  color: AppTheme.cyberCyan,
+                  size: 18,
+                ),
               ),
+              const SizedBox(width: 10),
+              const Expanded(
+                child: Text(
+                  'AI CFO Advisor',
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: TextStyle(
+                    color: Colors.white,
+                    fontSize: 15,
+                    fontWeight: FontWeight.w700,
+                  ),
+                ),
+              ),
+              const SizedBox(width: 8),
               if (!hasAiFeedback && !_controller.isAiAnalyzing)
-                ElevatedButton.icon(
+                FilledButton.icon(
                   icon: const Icon(Icons.psychology_rounded, size: 16),
-                  label: const Text('Consult AI CFO'),
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: AppTheme.tealAccent,
-                    foregroundColor: AppTheme.navyDeep,
+                  label: const Text('Consult AI'),
+                  style: FilledButton.styleFrom(
+                    backgroundColor: AppTheme.cyberCyan,
+                    foregroundColor: const Color(0xFF0F254B),
                     elevation: 0,
+                    visualDensity: VisualDensity.compact,
                     textStyle: const TextStyle(
                       fontSize: 12,
                       fontWeight: FontWeight.w700,
                     ),
                     padding: const EdgeInsets.symmetric(
                       horizontal: 12,
-                      vertical: 8,
+                      vertical: 7,
+                    ),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(10),
                     ),
                   ),
                   onPressed: () {
@@ -708,9 +726,9 @@ class _SimulationsScreenState extends State<SimulationsScreen> {
               ),
             ),
           ] else ...[
-            const SizedBox(height: 8),
+            const SizedBox(height: 10),
             const Text(
-              'Click "Consult AI CFO" to have Finora AI evaluate cash flow sensitivity, risk boundaries, and strategic execution steps for this scenario.',
+              'Finora AI evaluates sensitivity, risk boundaries, and strategic execution steps for this scenario.',
               style: TextStyle(
                 color: Colors.white70,
                 fontSize: 12,

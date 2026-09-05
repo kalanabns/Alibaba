@@ -9,16 +9,16 @@ class AppTheme {
   static const Color surfaceElevated = Color(0xFFF0F4F9); // Light neutral tint
   static const Color surfaceCard = Color(0xFFFFFFFF);
 
-  // 40% Futuristic Cyber-Navy & Obsidian
-  static const Color primaryNavy = Color(0xFF090E17); // Cyber Obsidian
-  static const Color secondaryNavy = Color(0xFF131D2E); // Deep Midnight Blue
-  static const Color navySurface = Color(0xFF1E293B); // Slate Navy
-  static const Color navyGlass = Color(0xFF0D1524);
+  // 40% Futuristic Tech Sapphire & Royal Blue (refined, modern, NOT pitch black)
+  static const Color primaryNavy = Color(0xFF112D55); // Deep Tech Sapphire
+  static const Color secondaryNavy = Color(0xFF1A3E78); // Royal Cobalt Blue
+  static const Color navySurface = Color(0xFF1E3A68); // Slate Sapphire
+  static const Color navyGlass = Color(0xFF142F5B);
 
   // Vibrant Futuristic Accents
   static const Color primaryColor = Color(0xFF2563EB); // Royal Electric Blue
   static const Color primaryLight = Color(0xFF06B6D4); // Cyber Cyan
-  static const Color primaryDark = Color(0xFF1E1B4B); // Deep Indigo
+  static const Color primaryDark = Color(0xFF1D4ED8); // Deep Royal Blue
 
   static const Color cyberCyan = Color(0xFF00E5FF);
   static const Color cyberIndigo = Color(0xFF6366F1);
@@ -47,7 +47,13 @@ class AppTheme {
   static const LinearGradient heroGradient = LinearGradient(
     begin: Alignment.topLeft,
     end: Alignment.bottomRight,
-    colors: [Color(0xFF090E17), Color(0xFF131D2E), Color(0xFF1E2638)],
+    colors: [Color(0xFF102D5E), Color(0xFF194488), Color(0xFF2563EB)],
+  );
+
+  static const LinearGradient headerGradient = LinearGradient(
+    begin: Alignment.topLeft,
+    end: Alignment.bottomRight,
+    colors: [Color(0xFF0F2B5C), Color(0xFF1A4384), Color(0xFF2563EB)],
   );
 
   static const LinearGradient primaryGradient = LinearGradient(
@@ -96,7 +102,7 @@ class AppTheme {
 
   static List<BoxShadow> get heroShadow => [
     BoxShadow(
-      color: const Color(0xFF090E17).withValues(alpha: 0.25),
+      color: const Color(0xFF0F1E36).withValues(alpha: 0.25),
       blurRadius: 24,
       offset: const Offset(0, 10),
     ),
@@ -116,8 +122,8 @@ class AppTheme {
   static const Color canvasWhite = background;
   static const Color cardLight = surface;
   static const Color cardBorder = borderColor;
-  static const Color navyDeep = primaryNavy;
-  static const Color navyPrimary = primaryNavy;
+  static const Color navyDeep = Color(0xFF112D55);
+  static const Color navyPrimary = Color(0xFF2563EB);
   static const Color tealAccent = primaryLight;
   static const Color coralRisk = errorColor;
   static const Color amberWarning = warningColor;
