@@ -1,17 +1,25 @@
 import 'package:flutter/material.dart';
 import '../core/theme/app_theme.dart';
 import '../features/ai_cfo/application/ai_cfo_controller.dart';
+import '../features/ai_cfo/application/cfo_action_plan_controller.dart';
 import '../features/ai_cfo/presentation/ai_cfo_screen.dart';
+import '../features/ai_cfo/presentation/cfo_action_plan_screen.dart';
 import '../features/alerts/application/alerts_controller.dart';
 import '../features/alerts/domain/alert.dart';
+import '../features/alerts/domain/priority_ranking_engine.dart';
 import '../features/alerts/presentation/alerts_screen.dart';
 import '../features/authentication/application/auth_controller.dart';
 import '../features/businesses/application/business_controller.dart';
 import '../features/businesses/data/demo_business_service.dart';
+import '../features/businesses/domain/business.dart';
+import '../features/financial_health/application/financial_goals_controller.dart';
 import '../features/financial_health/application/financial_health_controller.dart';
+import '../features/financial_health/presentation/analytics_screen.dart';
 import '../features/financial_health/presentation/dashboard_screen.dart';
+import '../features/financial_health/presentation/financial_goals_screen.dart';
 import '../features/forecasts/application/forecast_controller.dart';
 import '../features/forecasts/presentation/forecast_screen.dart';
+import '../features/simulations/domain/simulation_engine.dart';
 import '../features/simulations/presentation/simulations_screen.dart';
 import '../features/transactions/application/sms_ingestion_controller.dart';
 import '../features/transactions/application/transaction_controller.dart';
@@ -41,6 +49,8 @@ class _AuthenticatedAppShellState extends State<AuthenticatedAppShell> {
   late final AICFOController _aiCfoController;
   late final ForecastController _forecastController;
   late final SmsIngestionController _smsController;
+  late final FinancialGoalsController _goalsController;
+  late final CfoActionPlanController _actionPlanController;
 
   Alert? _alertToExplainInAi;
 
@@ -51,6 +61,8 @@ class _AuthenticatedAppShellState extends State<AuthenticatedAppShell> {
     _alertsController = AlertsController();
     _aiCfoController = AICFOController();
     _forecastController = ForecastController();
+    _goalsController = FinancialGoalsController();
+    _actionPlanController = CfoActionPlanController();
 
     _transactionController = TransactionController(
       onTransactionsChanged: () {
@@ -79,6 +91,8 @@ class _AuthenticatedAppShellState extends State<AuthenticatedAppShell> {
         ) {
           _syncAllEngines(silent: false);
         });
+        _goalsController.loadGoals(business.id);
+        _actionPlanController.loadActionItems(business.id);
         _aiCfoController.loadHistory(businessId: business.id);
       }
     }
@@ -88,6 +102,8 @@ class _AuthenticatedAppShellState extends State<AuthenticatedAppShell> {
     final demo = DemoBusinessService.getDemoData();
     _transactionController.loadInMemoryTransactions(demo.transactions);
     _alertsController.loadInMemoryAlerts(demo.alerts);
+    _goalsController.loadInMemoryGoals(demo.goals);
+    _actionPlanController.loadInMemoryActionItems(demo.actionPlan);
     _healthController.recalculate(
       businessId: demo.business.id,
       allTransactions: demo.transactions,
@@ -98,6 +114,12 @@ class _AuthenticatedAppShellState extends State<AuthenticatedAppShell> {
       buckets: demo.buckets,
       startingCash: demo.business.startingCash,
       silent: true,
+    );
+    _actionPlanController.generateRoadmap(
+      businessId: demo.business.id,
+      metric: demo.currentMetric,
+      alerts: demo.alerts,
+      goals: demo.goals,
     );
   }
 
@@ -133,6 +155,18 @@ class _AuthenticatedAppShellState extends State<AuthenticatedAppShell> {
         startingCash: business.startingCash,
         silent: silent,
       );
+
+      _goalsController.syncGoalsWithMetrics(
+        metric,
+        startingCash: business.startingCash,
+      );
+
+      _actionPlanController.generateRoadmap(
+        businessId: business.id,
+        metric: metric,
+        alerts: _alertsController.allAlerts,
+        goals: _goalsController.goals,
+      );
     }
   }
 
@@ -144,12 +178,116 @@ class _AuthenticatedAppShellState extends State<AuthenticatedAppShell> {
     _aiCfoController.dispose();
     _forecastController.dispose();
     _smsController.dispose();
+    _goalsController.dispose();
+    _actionPlanController.dispose();
     super.dispose();
   }
 
   void _handleSignOut() {
     widget.businessController.reset();
     widget.authController.signOut();
+  }
+
+  void _openAnalyticsScreen(BuildContext context) {
+    final business = widget.businessController.currentBusiness;
+    if (business == null) return;
+
+    Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (_) => AnalyticsScreen(
+          business: business,
+          currentTransactions: _transactionController.transactions,
+          monthlyBuckets: _healthController.monthlyBuckets,
+          currentMetric: _healthController.currentMetric,
+          previousMetric: _healthController.previousMetric,
+          onNavigateToSimulations: () => _openSimulationsScreen(context),
+          onNavigateToForecasts: () => _openForecastsScreen(context),
+          onNavigateToTransactions: () {
+            Navigator.pop(context);
+            setState(() => _selectedIndex = 1);
+          },
+        ),
+      ),
+    );
+  }
+
+  void _openGoalsScreen(BuildContext context) {
+    final business = widget.businessController.currentBusiness;
+    if (business == null) return;
+
+    Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (_) => FinancialGoalsScreen(
+          controller: _goalsController,
+          business: business,
+          currentMetric: _healthController.currentMetric,
+          onAskAiAboutGoal: (goal) {
+            Navigator.pop(context);
+            _selectedIndex = 2;
+            setState(() {});
+            _aiCfoController.sendMessage(
+              message:
+                  'What strategic recommendations do you have to help us achieve our goal: "${goal.title}"? Current value is ${goal.unit}${goal.currentValue} vs target ${goal.unit}${goal.targetValue}.',
+              businessId: business.id,
+              currentMetrics: _healthController.currentMetric,
+              business: business,
+              activeAlerts: _alertsController.allAlerts,
+              recentTransactions: _transactionController.transactions,
+            );
+          },
+          onNavigateToSimulations: () => _openSimulationsScreen(
+            context,
+            initialScenarioName: 'Goal Target Scenario',
+          ),
+        ),
+      ),
+    );
+  }
+
+  void _openActionPlanScreen(BuildContext context) {
+    final business = widget.businessController.currentBusiness;
+    if (business == null) return;
+
+    Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (_) => CfoActionPlanScreen(
+          controller: _actionPlanController,
+          business: business,
+          onExecuteAction: (item) {
+            switch (item.actionType) {
+              case ActionLinkType.runScenario:
+                _openSimulationsScreen(context, initialScenarioName: item.title);
+                break;
+              case ActionLinkType.reviewExpenses:
+              case ActionLinkType.collectReceivables:
+              case ActionLinkType.viewTransactions:
+                Navigator.pop(context);
+                setState(() => _selectedIndex = 1);
+                break;
+              case ActionLinkType.reviewForecast:
+                _openForecastsScreen(context);
+                break;
+              case ActionLinkType.askAiCfo:
+                Navigator.pop(context);
+                _selectedIndex = 2;
+                setState(() {});
+                _aiCfoController.sendMessage(
+                  message: 'Give me an execution plan for: ${item.title}',
+                  businessId: business.id,
+                  currentMetrics: _healthController.currentMetric,
+                  business: business,
+                  activeAlerts: _alertsController.allAlerts,
+                  recentTransactions: _transactionController.transactions,
+                );
+                break;
+            }
+          },
+        ),
+      ),
+    );
   }
 
   void _openForecastsScreen(BuildContext context) {
@@ -180,7 +318,14 @@ class _AuthenticatedAppShellState extends State<AuthenticatedAppShell> {
     );
   }
 
-  void _openSimulationsScreen(BuildContext context) {
+  void _openSimulationsScreen(
+    BuildContext context, {
+    ScenarioType? initialScenarioType,
+    double? initialPercentageDelta,
+    String? initialTargetCategory,
+    double? initialFixedAmountDelta,
+    String? initialScenarioName,
+  }) {
     final business = widget.businessController.currentBusiness;
     if (business == null) return;
 
@@ -191,6 +336,11 @@ class _AuthenticatedAppShellState extends State<AuthenticatedAppShell> {
           business: business,
           transactionsController: _transactionController,
           currentMetric: _healthController.currentMetric,
+          initialScenarioType: initialScenarioType,
+          initialPercentageDelta: initialPercentageDelta,
+          initialTargetCategory: initialTargetCategory,
+          initialFixedAmountDelta: initialFixedAmountDelta,
+          initialScenarioName: initialScenarioName,
         ),
       ),
     );
@@ -291,26 +441,79 @@ class _AuthenticatedAppShellState extends State<AuthenticatedAppShell> {
 
         return Scaffold(
           backgroundColor: AppTheme.background,
-          appBar: AppBar(
-            backgroundColor: AppTheme.primaryNavy,
-            foregroundColor: Colors.white,
-            title: Row(
+          appBar: _buildFuturisticHeader(context, business),
+          body: Stack(
+            children: [
+              // Screen content with bottom inset padding for floating nav bar
+              Positioned.fill(
+                child: Padding(
+                  padding: const EdgeInsets.only(bottom: 74),
+                  child: IndexedStack(index: _selectedIndex, children: pages),
+                ),
+              ),
+              // Floating Glassmorphic Navigation Island
+              Positioned(
+                left: 16,
+                right: 16,
+                bottom: MediaQuery.of(context).padding.bottom + 10,
+                child: _buildFloatingNavigationBar(unreadAlerts),
+              ),
+            ],
+          ),
+        );
+      },
+    );
+  }
+
+  PreferredSizeWidget _buildFuturisticHeader(BuildContext context, Business business) {
+    return PreferredSize(
+      preferredSize: const Size.fromHeight(68),
+      child: Container(
+        decoration: BoxDecoration(
+          gradient: AppTheme.heroGradient,
+          border: const Border(
+            bottom: BorderSide(color: Color(0x3338BDF8), width: 1.2),
+          ),
+          boxShadow: [
+            BoxShadow(
+              color: const Color(0xFF102D5E).withValues(alpha: 0.25),
+              blurRadius: 16,
+              offset: const Offset(0, 4),
+            ),
+          ],
+        ),
+        child: SafeArea(
+          bottom: false,
+          child: Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+            child: Row(
               children: [
+                // Glowing Business Avatar
                 Container(
-                  padding: const EdgeInsets.all(6),
+                  width: 40,
+                  height: 40,
                   decoration: BoxDecoration(
-                    color: AppTheme.primaryLight.withValues(alpha: 0.15),
-                    borderRadius: BorderRadius.circular(8),
+                    gradient: AppTheme.primaryGradient,
+                    borderRadius: BorderRadius.circular(12),
+                    boxShadow: [
+                      BoxShadow(
+                        color: AppTheme.primaryLight.withValues(alpha: 0.3),
+                        blurRadius: 10,
+                        offset: const Offset(0, 2),
+                      ),
+                    ],
                   ),
                   child: const Icon(
-                    Icons.account_balance_wallet_rounded,
-                    color: AppTheme.primaryLight,
+                    Icons.auto_awesome_rounded,
+                    color: Colors.white,
                     size: 20,
                   ),
                 ),
-                const SizedBox(width: 10),
+                const SizedBox(width: 12),
+                // Title & Subtitle Info
                 Expanded(
                   child: Column(
+                    mainAxisAlignment: MainAxisAlignment.center,
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Row(
@@ -320,8 +523,9 @@ class _AuthenticatedAppShellState extends State<AuthenticatedAppShell> {
                               business.name,
                               style: const TextStyle(
                                 fontSize: 16,
-                                fontWeight: FontWeight.bold,
+                                fontWeight: FontWeight.w800,
                                 color: Colors.white,
+                                letterSpacing: -0.2,
                               ),
                               maxLines: 1,
                               overflow: TextOverflow.ellipsis,
@@ -330,124 +534,251 @@ class _AuthenticatedAppShellState extends State<AuthenticatedAppShell> {
                           if (widget.businessController.isDemoMode) ...[
                             const SizedBox(width: 6),
                             Container(
-                              padding: const EdgeInsets.symmetric(horizontal: 5, vertical: 2),
+                              padding: const EdgeInsets.symmetric(
+                                horizontal: 6,
+                                vertical: 2,
+                              ),
                               decoration: BoxDecoration(
-                                color: Colors.amber.shade800,
-                                borderRadius: BorderRadius.circular(4),
+                                gradient: AppTheme.amberGradient,
+                                borderRadius: BorderRadius.circular(6),
+                                boxShadow: [
+                                  BoxShadow(
+                                    color: AppTheme.warningColor.withValues(alpha: 0.3),
+                                    blurRadius: 6,
+                                  ),
+                                ],
                               ),
                               child: const Text(
                                 'DEMO',
                                 style: TextStyle(
                                   color: Colors.white,
                                   fontSize: 9,
-                                  fontWeight: FontWeight.bold,
+                                  fontWeight: FontWeight.w800,
+                                  letterSpacing: 0.5,
                                 ),
                               ),
                             ),
                           ],
                         ],
                       ),
+                      const SizedBox(height: 2),
                       Text(
                         '${business.currency} • ${business.industry ?? "General"}',
                         style: const TextStyle(
                           fontSize: 11,
                           color: Color(0xFF94A3B8),
+                          fontWeight: FontWeight.w500,
                         ),
                       ),
                     ],
                   ),
                 ),
+                // Quick Action Action-Pills
+                _buildHeaderIconButton(
+                  icon: Icons.insights_rounded,
+                  tooltip: 'Advanced BI Analytics',
+                  onTap: () => _openAnalyticsScreen(context),
+                  accentColor: AppTheme.accentColor,
+                ),
+                const SizedBox(width: 6),
+                _buildHeaderIconButton(
+                  icon: Icons.checklist_rtl_rounded,
+                  tooltip: 'CFO Action Plan',
+                  onTap: () => _openActionPlanScreen(context),
+                  accentColor: AppTheme.cyberIndigo,
+                ),
+                const SizedBox(width: 6),
+                _buildHeaderIconButton(
+                  icon: Icons.flag_rounded,
+                  tooltip: 'Financial Goals',
+                  onTap: () => _openGoalsScreen(context),
+                  accentColor: AppTheme.primaryLight,
+                ),
+                const SizedBox(width: 6),
+                _buildHeaderIconButton(
+                  icon: Icons.auto_graph_rounded,
+                  tooltip: 'Forecasts & Trends',
+                  onTap: () => _openForecastsScreen(context),
+                ),
+                const SizedBox(width: 6),
+                _buildHeaderIconButton(
+                  icon: Icons.tune_rounded,
+                  tooltip: 'What-If Simulator',
+                  onTap: () => _openSimulationsScreen(context),
+                ),
+                const SizedBox(width: 6),
+                _buildHeaderIconButton(
+                  icon: widget.businessController.isDemoMode
+                      ? Icons.exit_to_app_rounded
+                      : Icons.logout_rounded,
+                  tooltip: widget.businessController.isDemoMode ? 'Exit Demo' : 'Log Out',
+                  accentColor: widget.businessController.isDemoMode
+                      ? AppTheme.warningColor
+                      : Colors.white70,
+                  onTap: widget.businessController.isDemoMode
+                      ? widget.businessController.exitDemoMode
+                      : _handleSignOut,
+                ),
               ],
             ),
-            actions: [
-              IconButton(
-                icon: const Icon(
-                  Icons.help_outline_rounded,
-                  color: Colors.white70,
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildHeaderIconButton({
+    required IconData icon,
+    required String tooltip,
+    required VoidCallback onTap,
+    Color? accentColor,
+  }) {
+    return Tooltip(
+      message: tooltip,
+      child: Material(
+        color: Colors.transparent,
+        child: InkWell(
+          onTap: onTap,
+          borderRadius: BorderRadius.circular(10),
+          child: Container(
+            width: 34,
+            height: 34,
+            decoration: BoxDecoration(
+              color: Colors.white.withValues(alpha: 0.08),
+              borderRadius: BorderRadius.circular(10),
+              border: Border.all(color: Colors.white.withValues(alpha: 0.12)),
+            ),
+            child: Icon(
+              icon,
+              size: 17,
+              color: accentColor ?? Colors.white.withValues(alpha: 0.85),
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildFloatingNavigationBar(int unreadAlerts) {
+    return Container(
+      height: 62,
+      padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 6),
+      decoration: BoxDecoration(
+        gradient: const LinearGradient(
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+          colors: [Color(0xFF102A54), Color(0xFF16376D)],
+        ),
+        borderRadius: BorderRadius.circular(32),
+        border: Border.all(color: const Color(0x3538BDF8), width: 1.2),
+        boxShadow: [
+          BoxShadow(
+            color: const Color(0xFF102A54).withValues(alpha: 0.30),
+            blurRadius: 24,
+            offset: const Offset(0, 10),
+          ),
+          BoxShadow(
+            color: const Color(0xFF00E5FF).withValues(alpha: 0.12),
+            blurRadius: 16,
+            offset: const Offset(0, 2),
+          ),
+        ],
+      ),
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+        children: [
+          _buildNavItem(0, Icons.dashboard_outlined, Icons.dashboard_rounded, 'Dashboard'),
+          _buildNavItem(1, Icons.receipt_long_outlined, Icons.receipt_long_rounded, 'Ledger'),
+          _buildNavItem(2, Icons.psychology_outlined, Icons.psychology_rounded, 'AI CFO'),
+          _buildNavItem(3, Icons.notifications_none_rounded, Icons.notifications_rounded, 'Signals', badgeCount: unreadAlerts),
+          _buildNavItem(4, Icons.settings_outlined, Icons.settings_rounded, 'Workspace'),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildNavItem(
+    int index,
+    IconData icon,
+    IconData selectedIcon,
+    String label, {
+    int badgeCount = 0,
+  }) {
+    final isSelected = _selectedIndex == index;
+
+    return GestureDetector(
+      onTap: () => setState(() => _selectedIndex = index),
+      behavior: HitTestBehavior.opaque,
+      child: AnimatedContainer(
+        duration: const Duration(milliseconds: 220),
+        curve: Curves.easeOutCubic,
+        padding: EdgeInsets.symmetric(
+          horizontal: isSelected ? 12 : 8,
+          vertical: 6,
+        ),
+        decoration: isSelected
+            ? BoxDecoration(
+                gradient: AppTheme.primaryGradient,
+                borderRadius: BorderRadius.circular(24),
+                boxShadow: [
+                  BoxShadow(
+                    color: AppTheme.primaryLight.withValues(alpha: 0.35),
+                    blurRadius: 10,
+                    offset: const Offset(0, 2),
+                  ),
+                ],
+              )
+            : null,
+        child: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Stack(
+              clipBehavior: Clip.none,
+              children: [
+                Icon(
+                  isSelected ? selectedIcon : icon,
+                  color: isSelected ? Colors.white : const Color(0xFF94A3B8),
                   size: 20,
                 ),
-                tooltip: 'Product Guide',
-                onPressed: () => OnboardingGuideDialog.show(context),
-              ),
-              IconButton(
-                icon: const Icon(
-                  Icons.auto_graph_rounded,
-                  color: Colors.white70,
-                  size: 20,
+                if (badgeCount > 0)
+                  Positioned(
+                    top: -4,
+                    right: -6,
+                    child: Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 1),
+                      decoration: BoxDecoration(
+                        color: AppTheme.errorColor,
+                        borderRadius: BorderRadius.circular(8),
+                      ),
+                      constraints: const BoxConstraints(minWidth: 14, minHeight: 14),
+                      child: Text(
+                        '$badgeCount',
+                        style: const TextStyle(
+                          color: Colors.white,
+                          fontSize: 9,
+                          fontWeight: FontWeight.bold,
+                        ),
+                        textAlign: TextAlign.center,
+                      ),
+                    ),
+                  ),
+              ],
+            ),
+            if (isSelected) ...[
+              const SizedBox(width: 6),
+              Text(
+                label,
+                style: const TextStyle(
+                  color: Colors.white,
+                  fontSize: 12,
+                  fontWeight: FontWeight.w700,
+                  letterSpacing: -0.1,
                 ),
-                tooltip: 'Forecasts',
-                onPressed: () => _openForecastsScreen(context),
-              ),
-              IconButton(
-                icon: const Icon(
-                  Icons.tune_rounded,
-                  color: Colors.white70,
-                  size: 20,
-                ),
-                tooltip: 'What-If Simulator',
-                onPressed: () => _openSimulationsScreen(context),
-              ),
-              IconButton(
-                icon: Icon(
-                  widget.businessController.isDemoMode ? Icons.exit_to_app_rounded : Icons.logout_rounded,
-                  color: Colors.white70,
-                  size: 20,
-                ),
-                tooltip: widget.businessController.isDemoMode ? 'Exit Demo' : 'Log Out',
-                onPressed: widget.businessController.isDemoMode
-                    ? () {
-                        widget.businessController.exitDemoMode();
-                      }
-                    : _handleSignOut,
               ),
             ],
-          ),
-          body: IndexedStack(index: _selectedIndex, children: pages),
-          bottomNavigationBar: NavigationBar(
-            selectedIndex: _selectedIndex,
-            backgroundColor: AppTheme.primaryNavy,
-            indicatorColor: AppTheme.primaryLight.withValues(alpha: 0.2),
-            onDestinationSelected: (index) {
-              setState(() {
-                _selectedIndex = index;
-              });
-            },
-            destinations: [
-              const NavigationDestination(
-                icon: Icon(Icons.dashboard_outlined),
-                selectedIcon: Icon(Icons.dashboard_rounded),
-                label: 'Dashboard',
-              ),
-              const NavigationDestination(
-                icon: Icon(Icons.receipt_long_outlined),
-                selectedIcon: Icon(Icons.receipt_long_rounded),
-                label: 'Transactions',
-              ),
-              const NavigationDestination(
-                icon: Icon(Icons.psychology_outlined),
-                selectedIcon: Icon(Icons.psychology_rounded),
-                label: 'AI CFO',
-              ),
-              NavigationDestination(
-                icon: unreadAlerts > 0
-                    ? Badge(
-                        label: Text('$unreadAlerts'),
-                        backgroundColor: AppTheme.errorColor,
-                        child: const Icon(Icons.notifications_none_rounded),
-                      )
-                    : const Icon(Icons.notifications_none_rounded),
-                selectedIcon: const Icon(Icons.notifications_rounded),
-                label: 'Alerts',
-              ),
-              const NavigationDestination(
-                icon: Icon(Icons.settings_outlined),
-                selectedIcon: Icon(Icons.settings_rounded),
-                label: 'Settings',
-              ),
-            ],
-          ),
-        );
-      },
+          ],
+        ),
+      ),
     );
   }
 
@@ -456,7 +787,7 @@ class _AuthenticatedAppShellState extends State<AuthenticatedAppShell> {
     final business = widget.businessController.currentBusiness;
 
     return ListView(
-      padding: const EdgeInsets.all(20.0),
+      padding: const EdgeInsets.symmetric(horizontal: 20.0, vertical: 20.0),
       children: [
         const Text(
           'Account & Workspace',
@@ -470,26 +801,28 @@ class _AuthenticatedAppShellState extends State<AuthenticatedAppShell> {
         Container(
           decoration: BoxDecoration(
             color: AppTheme.surface,
-            borderRadius: BorderRadius.circular(16),
-            border: Border.all(color: AppTheme.borderColor),
-            boxShadow: [
-              BoxShadow(
-                color: Colors.black.withValues(alpha: 0.03),
-                blurRadius: 8,
-                offset: const Offset(0, 2),
-              ),
-            ],
+            borderRadius: BorderRadius.circular(22),
+            border: Border.all(color: AppTheme.borderColor.withValues(alpha: 0.8)),
+            boxShadow: AppTheme.cardShadow,
           ),
           child: Column(
             children: [
               ListTile(
-                leading: const Icon(
-                  Icons.person_outline_rounded,
-                  color: AppTheme.textSecondary,
+                leading: Container(
+                  padding: const EdgeInsets.all(8),
+                  decoration: BoxDecoration(
+                    color: AppTheme.primaryLight.withValues(alpha: 0.1),
+                    borderRadius: BorderRadius.circular(10),
+                  ),
+                  child: const Icon(
+                    Icons.person_outline_rounded,
+                    color: AppTheme.primaryColor,
+                    size: 20,
+                  ),
                 ),
                 title: const Text(
                   'User Email',
-                  style: TextStyle(fontSize: 13, color: AppTheme.textSecondary),
+                  style: TextStyle(fontSize: 12, color: AppTheme.textSecondary),
                 ),
                 subtitle: Text(
                   user?.email ?? 'N/A',
@@ -502,13 +835,21 @@ class _AuthenticatedAppShellState extends State<AuthenticatedAppShell> {
               ),
               const Divider(height: 1),
               ListTile(
-                leading: const Icon(
-                  Icons.store_outlined,
-                  color: AppTheme.textSecondary,
+                leading: Container(
+                  padding: const EdgeInsets.all(8),
+                  decoration: BoxDecoration(
+                    color: AppTheme.accentColor.withValues(alpha: 0.1),
+                    borderRadius: BorderRadius.circular(10),
+                  ),
+                  child: const Icon(
+                    Icons.store_outlined,
+                    color: AppTheme.accentColor,
+                    size: 20,
+                  ),
                 ),
                 title: const Text(
                   'Business Name',
-                  style: TextStyle(fontSize: 13, color: AppTheme.textSecondary),
+                  style: TextStyle(fontSize: 12, color: AppTheme.textSecondary),
                 ),
                 subtitle: Text(
                   business?.name ?? 'N/A',
@@ -521,13 +862,21 @@ class _AuthenticatedAppShellState extends State<AuthenticatedAppShell> {
               ),
               const Divider(height: 1),
               ListTile(
-                leading: const Icon(
-                  Icons.monetization_on_outlined,
-                  color: AppTheme.textSecondary,
+                leading: Container(
+                  padding: const EdgeInsets.all(8),
+                  decoration: BoxDecoration(
+                    color: AppTheme.warningColor.withValues(alpha: 0.1),
+                    borderRadius: BorderRadius.circular(10),
+                  ),
+                  child: const Icon(
+                    Icons.monetization_on_outlined,
+                    color: AppTheme.warningColor,
+                    size: 20,
+                  ),
                 ),
                 title: const Text(
                   'Base Currency',
-                  style: TextStyle(fontSize: 13, color: AppTheme.textSecondary),
+                  style: TextStyle(fontSize: 12, color: AppTheme.textSecondary),
                 ),
                 subtitle: Text(
                   business?.currency ?? 'USD',
@@ -540,13 +889,21 @@ class _AuthenticatedAppShellState extends State<AuthenticatedAppShell> {
               ),
               const Divider(height: 1),
               ListTile(
-                leading: const Icon(
-                  Icons.calendar_month_outlined,
-                  color: AppTheme.textSecondary,
+                leading: Container(
+                  padding: const EdgeInsets.all(8),
+                  decoration: BoxDecoration(
+                    color: AppTheme.cyberIndigo.withValues(alpha: 0.1),
+                    borderRadius: BorderRadius.circular(10),
+                  ),
+                  child: const Icon(
+                    Icons.calendar_month_outlined,
+                    color: AppTheme.cyberIndigo,
+                    size: 20,
+                  ),
                 ),
                 title: const Text(
                   'Fiscal Year Start Month',
-                  style: TextStyle(fontSize: 13, color: AppTheme.textSecondary),
+                  style: TextStyle(fontSize: 12, color: AppTheme.textSecondary),
                 ),
                 subtitle: Text(
                   'Month ${business?.fiscalYearStartMonth ?? 1}',
@@ -560,7 +917,175 @@ class _AuthenticatedAppShellState extends State<AuthenticatedAppShell> {
             ],
           ),
         ),
-        const SizedBox(height: 20),
+        const SizedBox(height: 22),
+
+        // Strategic Intelligence & Tools Section
+        const Text(
+          'Strategic Intelligence & Tools',
+          style: TextStyle(
+            fontSize: 20,
+            fontWeight: FontWeight.bold,
+            color: AppTheme.textPrimary,
+          ),
+        ),
+        const SizedBox(height: 16),
+        Container(
+          decoration: BoxDecoration(
+            color: AppTheme.surface,
+            borderRadius: BorderRadius.circular(22),
+            border: Border.all(color: AppTheme.borderColor.withValues(alpha: 0.8)),
+            boxShadow: AppTheme.cardShadow,
+          ),
+          child: Column(
+            children: [
+              ListTile(
+                leading: Container(
+                  padding: const EdgeInsets.all(8),
+                  decoration: BoxDecoration(
+                    color: AppTheme.accentColor.withValues(alpha: 0.1),
+                    borderRadius: BorderRadius.circular(10),
+                  ),
+                  child: const Icon(
+                    Icons.insights_rounded,
+                    color: AppTheme.accentColor,
+                    size: 20,
+                  ),
+                ),
+                title: const Text(
+                  'Advanced BI & Analytics Matrix',
+                  style: TextStyle(
+                    fontSize: 15,
+                    fontWeight: FontWeight.w600,
+                    color: AppTheme.textPrimary,
+                  ),
+                ),
+                subtitle: const Text(
+                  '6-Tab deep dive: Category trends, period comparisons & margin drivers',
+                  style: TextStyle(fontSize: 12, color: AppTheme.textSecondary),
+                ),
+                trailing: const Icon(Icons.arrow_forward_ios_rounded, size: 14, color: AppTheme.textSecondary),
+                onTap: () => _openAnalyticsScreen(context),
+              ),
+              const Divider(height: 1),
+              ListTile(
+                leading: Container(
+                  padding: const EdgeInsets.all(8),
+                  decoration: BoxDecoration(
+                    color: AppTheme.cyberIndigo.withValues(alpha: 0.1),
+                    borderRadius: BorderRadius.circular(10),
+                  ),
+                  child: const Icon(
+                    Icons.checklist_rtl_rounded,
+                    color: AppTheme.cyberIndigo,
+                    size: 20,
+                  ),
+                ),
+                title: const Text(
+                  'AI CFO Strategic Action Plan',
+                  style: TextStyle(
+                    fontSize: 15,
+                    fontWeight: FontWeight.w600,
+                    color: AppTheme.textPrimary,
+                  ),
+                ),
+                subtitle: const Text(
+                  'Prioritized 30/90-day execution roadmap and status tracking',
+                  style: TextStyle(fontSize: 12, color: AppTheme.textSecondary),
+                ),
+                trailing: const Icon(Icons.arrow_forward_ios_rounded, size: 14, color: AppTheme.textSecondary),
+                onTap: () => _openActionPlanScreen(context),
+              ),
+              const Divider(height: 1),
+              ListTile(
+                leading: Container(
+                  padding: const EdgeInsets.all(8),
+                  decoration: BoxDecoration(
+                    color: AppTheme.primaryLight.withValues(alpha: 0.1),
+                    borderRadius: BorderRadius.circular(10),
+                  ),
+                  child: const Icon(
+                    Icons.flag_rounded,
+                    color: AppTheme.primaryLight,
+                    size: 20,
+                  ),
+                ),
+                title: const Text(
+                  'Financial Targets & Goals',
+                  style: TextStyle(
+                    fontSize: 15,
+                    fontWeight: FontWeight.w600,
+                    color: AppTheme.textPrimary,
+                  ),
+                ),
+                subtitle: const Text(
+                  'Live goal progress bars, status badges & AI advisory hooks',
+                  style: TextStyle(fontSize: 12, color: AppTheme.textSecondary),
+                ),
+                trailing: const Icon(Icons.arrow_forward_ios_rounded, size: 14, color: AppTheme.textSecondary),
+                onTap: () => _openGoalsScreen(context),
+              ),
+              const Divider(height: 1),
+              ListTile(
+                leading: Container(
+                  padding: const EdgeInsets.all(8),
+                  decoration: BoxDecoration(
+                    color: AppTheme.accentColor.withValues(alpha: 0.1),
+                    borderRadius: BorderRadius.circular(10),
+                  ),
+                  child: const Icon(
+                    Icons.auto_graph_rounded,
+                    color: AppTheme.accentColor,
+                    size: 20,
+                  ),
+                ),
+                title: const Text(
+                  'Predictive Trends & Forecasts',
+                  style: TextStyle(
+                    fontSize: 15,
+                    fontWeight: FontWeight.w600,
+                    color: AppTheme.textPrimary,
+                  ),
+                ),
+                subtitle: const Text(
+                  '3-Month horizons with linear trend & confidence intervals',
+                  style: TextStyle(fontSize: 12, color: AppTheme.textSecondary),
+                ),
+                trailing: const Icon(Icons.arrow_forward_ios_rounded, size: 14, color: AppTheme.textSecondary),
+                onTap: () => _openForecastsScreen(context),
+              ),
+              const Divider(height: 1),
+              ListTile(
+                leading: Container(
+                  padding: const EdgeInsets.all(8),
+                  decoration: BoxDecoration(
+                    color: AppTheme.primaryColor.withValues(alpha: 0.1),
+                    borderRadius: BorderRadius.circular(10),
+                  ),
+                  child: const Icon(
+                    Icons.tune_rounded,
+                    color: AppTheme.primaryColor,
+                    size: 20,
+                  ),
+                ),
+                title: const Text(
+                  'What-If Scenario Simulator',
+                  style: TextStyle(
+                    fontSize: 15,
+                    fontWeight: FontWeight.w600,
+                    color: AppTheme.textPrimary,
+                  ),
+                ),
+                subtitle: const Text(
+                  'Simulate revenue shifts, expense cuts, pricing, and headcount',
+                  style: TextStyle(fontSize: 12, color: AppTheme.textSecondary),
+                ),
+                trailing: const Icon(Icons.arrow_forward_ios_rounded, size: 14, color: AppTheme.textSecondary),
+                onTap: () => _openSimulationsScreen(context),
+              ),
+            ],
+          ),
+        ),
+        const SizedBox(height: 22),
 
         // Automations & Ingestion Section
         const Text(
@@ -575,22 +1100,24 @@ class _AuthenticatedAppShellState extends State<AuthenticatedAppShell> {
         Container(
           decoration: BoxDecoration(
             color: AppTheme.surface,
-            borderRadius: BorderRadius.circular(16),
-            border: Border.all(color: AppTheme.borderColor),
-            boxShadow: [
-              BoxShadow(
-                color: Colors.black.withValues(alpha: 0.03),
-                blurRadius: 8,
-                offset: const Offset(0, 2),
-              ),
-            ],
+            borderRadius: BorderRadius.circular(22),
+            border: Border.all(color: AppTheme.borderColor.withValues(alpha: 0.8)),
+            boxShadow: AppTheme.cardShadow,
           ),
           child: Column(
             children: [
               ListTile(
-                leading: const Icon(
-                  Icons.sms_outlined,
-                  color: AppTheme.primaryLight,
+                leading: Container(
+                  padding: const EdgeInsets.all(8),
+                  decoration: BoxDecoration(
+                    color: AppTheme.primaryLight.withValues(alpha: 0.1),
+                    borderRadius: BorderRadius.circular(10),
+                  ),
+                  child: const Icon(
+                    Icons.sms_outlined,
+                    color: AppTheme.primaryLight,
+                    size: 20,
+                  ),
                 ),
                 title: const Text(
                   'Android SMS Ingestion',
@@ -616,13 +1143,21 @@ class _AuthenticatedAppShellState extends State<AuthenticatedAppShell> {
               ),
               const Divider(height: 1),
               ListTile(
-                leading: const Icon(
-                  Icons.fact_check_outlined,
-                  color: AppTheme.textSecondary,
+                leading: Container(
+                  padding: const EdgeInsets.all(8),
+                  decoration: BoxDecoration(
+                    color: AppTheme.infoColor.withValues(alpha: 0.1),
+                    borderRadius: BorderRadius.circular(10),
+                  ),
+                  child: const Icon(
+                    Icons.fact_check_outlined,
+                    color: AppTheme.infoColor,
+                    size: 20,
+                  ),
                 ),
                 title: const Text(
                   'Review SMS Candidates',
-                  style: TextStyle(fontSize: 14, color: AppTheme.textPrimary),
+                  style: TextStyle(fontSize: 14, color: AppTheme.textPrimary, fontWeight: FontWeight.w600),
                 ),
                 subtitle: Text(
                   '${_smsController.pendingCandidates.length} pending approval',
@@ -638,7 +1173,7 @@ class _AuthenticatedAppShellState extends State<AuthenticatedAppShell> {
             ],
           ),
         ),
-        const SizedBox(height: 20),
+        const SizedBox(height: 22),
 
         // Product Guide & Presentation Tools
         const Text(
@@ -653,22 +1188,24 @@ class _AuthenticatedAppShellState extends State<AuthenticatedAppShell> {
         Container(
           decoration: BoxDecoration(
             color: AppTheme.surface,
-            borderRadius: BorderRadius.circular(16),
-            border: Border.all(color: AppTheme.borderColor),
-            boxShadow: [
-              BoxShadow(
-                color: Colors.black.withValues(alpha: 0.03),
-                blurRadius: 8,
-                offset: const Offset(0, 2),
-              ),
-            ],
+            borderRadius: BorderRadius.circular(22),
+            border: Border.all(color: AppTheme.borderColor.withValues(alpha: 0.8)),
+            boxShadow: AppTheme.cardShadow,
           ),
           child: Column(
             children: [
               ListTile(
-                leading: const Icon(
-                  Icons.menu_book_outlined,
-                  color: AppTheme.primaryLight,
+                leading: Container(
+                  padding: const EdgeInsets.all(8),
+                  decoration: BoxDecoration(
+                    color: AppTheme.primaryLight.withValues(alpha: 0.1),
+                    borderRadius: BorderRadius.circular(10),
+                  ),
+                  child: const Icon(
+                    Icons.menu_book_outlined,
+                    color: AppTheme.primaryLight,
+                    size: 20,
+                  ),
                 ),
                 title: const Text(
                   '4-Pillar Architecture Guide',
@@ -687,9 +1224,17 @@ class _AuthenticatedAppShellState extends State<AuthenticatedAppShell> {
               ),
               const Divider(height: 1),
               ListTile(
-                leading: const Icon(
-                  Icons.science_outlined,
-                  color: AppTheme.warningColor,
+                leading: Container(
+                  padding: const EdgeInsets.all(8),
+                  decoration: BoxDecoration(
+                    color: AppTheme.warningColor.withValues(alpha: 0.1),
+                    borderRadius: BorderRadius.circular(10),
+                  ),
+                  child: const Icon(
+                    Icons.science_outlined,
+                    color: AppTheme.warningColor,
+                    size: 20,
+                  ),
                 ),
                 title: Text(
                   widget.businessController.isDemoMode ? 'Exit Demo Mode' : 'Load Hackathon Demo Dataset',
@@ -724,11 +1269,14 @@ class _AuthenticatedAppShellState extends State<AuthenticatedAppShell> {
           onPressed: widget.businessController.isDemoMode ? widget.businessController.exitDemoMode : _handleSignOut,
           style: OutlinedButton.styleFrom(
             foregroundColor: AppTheme.errorColor,
-            side: const BorderSide(color: AppTheme.errorColor),
+            side: BorderSide(color: AppTheme.errorColor.withValues(alpha: 0.6)),
+            padding: const EdgeInsets.symmetric(vertical: 14),
+            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
           ),
           icon: Icon(widget.businessController.isDemoMode ? Icons.exit_to_app_rounded : Icons.logout_rounded, size: 18),
           label: Text(widget.businessController.isDemoMode ? 'Exit Demo Mode' : 'Log Out of Finora'),
         ),
+        const SizedBox(height: 30),
       ],
     );
   }

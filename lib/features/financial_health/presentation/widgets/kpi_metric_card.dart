@@ -28,7 +28,7 @@ class KpiMetricCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final color = accentColor ?? AppTheme.textPrimary;
+    final color = accentColor ?? AppTheme.primaryColor;
     final formattedAmount = MoneyFormatter.format(
       amount,
       currency: currency,
@@ -45,33 +45,34 @@ class KpiMetricCard extends StatelessWidget {
 
       if (isZero) {
         growthColor = AppTheme.textSecondary;
-        growthIcon = Icons.remove;
+        growthIcon = Icons.remove_rounded;
         growthText = '0.0%';
       } else if (isExpenseType) {
         // For expenses: growth is warning/danger, reduction is positive emerald!
         growthColor = isPositive ? AppTheme.errorColor : AppTheme.accentColor;
-        growthIcon = isPositive ? Icons.trending_up : Icons.trending_down;
+        growthIcon = isPositive ? Icons.trending_up_rounded : Icons.trending_down_rounded;
         growthText = '${isPositive ? '+' : ''}${growth!.toStringAsFixed(1)}%';
       } else {
         // For revenue/profit/cash: growth is positive emerald, drop is coral red!
         growthColor = isPositive ? AppTheme.accentColor : AppTheme.errorColor;
-        growthIcon = isPositive ? Icons.trending_up : Icons.trending_down;
+        growthIcon = isPositive ? Icons.trending_up_rounded : Icons.trending_down_rounded;
         growthText = '${isPositive ? '+' : ''}${growth!.toStringAsFixed(1)}%';
       }
     }
 
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
       decoration: BoxDecoration(
         color: AppTheme.surface,
-        borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: AppTheme.borderColor),
+        borderRadius: BorderRadius.circular(20),
+        border: Border.all(color: AppTheme.borderColor.withValues(alpha: 0.8)),
+        boxShadow: AppTheme.cardShadow,
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
-          // Header: Icon + Title
+          // Header: Title + Glowing Icon Container
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
@@ -81,20 +82,22 @@ class KpiMetricCard extends StatelessWidget {
                   style: const TextStyle(
                     color: AppTheme.textSecondary,
                     fontSize: 12,
-                    fontWeight: FontWeight.w500,
+                    fontWeight: FontWeight.w600,
+                    letterSpacing: -0.1,
                   ),
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
                 ),
               ),
               Container(
-                width: 28,
-                height: 28,
+                width: 32,
+                height: 32,
                 decoration: BoxDecoration(
                   color: color.withValues(alpha: 0.12),
-                  borderRadius: BorderRadius.circular(8),
+                  borderRadius: BorderRadius.circular(10),
+                  border: Border.all(color: color.withValues(alpha: 0.2)),
                 ),
-                child: Icon(icon, size: 15, color: color),
+                child: Icon(icon, size: 16, color: color),
               ),
             ],
           ),
@@ -105,8 +108,8 @@ class KpiMetricCard extends StatelessWidget {
             style: const TextStyle(
               color: AppTheme.textPrimary,
               fontSize: 20,
-              fontWeight: FontWeight.bold,
-              letterSpacing: -0.3,
+              fontWeight: FontWeight.w800,
+              letterSpacing: -0.4,
             ),
             maxLines: 1,
             overflow: TextOverflow.ellipsis,
@@ -120,34 +123,38 @@ class KpiMetricCard extends StatelessWidget {
                   growthIcon != null) ...[
                 Container(
                   padding: const EdgeInsets.symmetric(
-                    horizontal: 5,
-                    vertical: 2,
+                    horizontal: 6,
+                    vertical: 2.5,
                   ),
                   decoration: BoxDecoration(
-                    color: growthColor.withValues(alpha: 0.15),
-                    borderRadius: BorderRadius.circular(4),
+                    color: growthColor.withValues(alpha: 0.14),
+                    borderRadius: BorderRadius.circular(6),
                   ),
                   child: Row(
                     mainAxisSize: MainAxisSize.min,
                     children: [
-                      Icon(growthIcon, size: 11, color: growthColor),
-                      const SizedBox(width: 2),
+                      Icon(growthIcon, size: 12, color: growthColor),
+                      const SizedBox(width: 3),
                       Text(
                         growthText,
                         style: TextStyle(
                           color: growthColor,
                           fontSize: 10,
-                          fontWeight: FontWeight.bold,
+                          fontWeight: FontWeight.w800,
                         ),
                       ),
                     ],
                   ),
                 ),
-                const SizedBox(width: 4),
+                const SizedBox(width: 5),
                 const Flexible(
                   child: Text(
-                    'vs prev',
-                    style: TextStyle(color: AppTheme.textMuted, fontSize: 10),
+                    'vs prior',
+                    style: TextStyle(
+                      color: AppTheme.textMuted,
+                      fontSize: 10,
+                      fontWeight: FontWeight.w500,
+                    ),
                     maxLines: 1,
                     overflow: TextOverflow.ellipsis,
                   ),
@@ -159,6 +166,7 @@ class KpiMetricCard extends StatelessWidget {
                     style: const TextStyle(
                       color: AppTheme.textMuted,
                       fontSize: 10,
+                      fontWeight: FontWeight.w500,
                     ),
                     maxLines: 1,
                     overflow: TextOverflow.ellipsis,
@@ -167,8 +175,12 @@ class KpiMetricCard extends StatelessWidget {
               ] else ...[
                 const Flexible(
                   child: Text(
-                    'Current period',
-                    style: TextStyle(color: AppTheme.textMuted, fontSize: 10),
+                    'Current cycle',
+                    style: TextStyle(
+                      color: AppTheme.textMuted,
+                      fontSize: 10,
+                      fontWeight: FontWeight.w500,
+                    ),
                     maxLines: 1,
                     overflow: TextOverflow.ellipsis,
                   ),

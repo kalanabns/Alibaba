@@ -68,221 +68,257 @@ class AiCfoActionCard extends StatelessWidget {
     final color = _getPriorityColor();
 
     return Container(
-      margin: const EdgeInsets.only(bottom: 14),
+      margin: const EdgeInsets.only(bottom: 16),
       decoration: BoxDecoration(
         color: AppTheme.surface,
-        borderRadius: BorderRadius.circular(16),
+        borderRadius: BorderRadius.circular(22),
         border: Border.all(
           color: issue.isCritical
               ? AppTheme.errorColor.withValues(alpha: 0.5)
-              : AppTheme.borderColor,
+              : AppTheme.borderColor.withValues(alpha: 0.8),
           width: issue.isCritical ? 1.5 : 1.0,
         ),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withValues(alpha: 0.03),
-            blurRadius: 8,
-            offset: const Offset(0, 2),
-          ),
-        ],
+        boxShadow: AppTheme.cardShadow,
       ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.stretch,
-        children: [
-          // Header with Priority Badge and Urgency
-          Padding(
-            padding: const EdgeInsets.fromLTRB(16, 14, 16, 10),
-            child: Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
-                  decoration: BoxDecoration(
-                    color: color.withValues(alpha: 0.12),
-                    borderRadius: BorderRadius.circular(6),
-                    border: Border.all(color: color.withValues(alpha: 0.3)),
-                  ),
-                  child: Text(
-                    issue.priorityBadgeLabel,
-                    style: TextStyle(
-                      color: color,
-                      fontSize: 10,
-                      fontWeight: FontWeight.bold,
-                      letterSpacing: 0.5,
-                    ),
-                  ),
-                ),
-                Row(
-                  children: [
-                    const Icon(
-                      Icons.schedule_rounded,
-                      size: 13,
-                      color: AppTheme.textSecondary,
-                    ),
-                    const SizedBox(width: 4),
-                    Text(
-                      issue.urgency,
-                      style: const TextStyle(
-                        color: AppTheme.textSecondary,
-                        fontSize: 11,
-                        fontWeight: FontWeight.w600,
-                      ),
+      child: ClipRRect(
+        borderRadius: BorderRadius.circular(22),
+        child: IntrinsicHeight(
+          child: Row(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              // Left Accent Color Bar
+              Container(
+                width: 5,
+                decoration: BoxDecoration(
+                  color: color,
+                  boxShadow: [
+                    BoxShadow(
+                      color: color.withValues(alpha: 0.4),
+                      blurRadius: 6,
                     ),
                   ],
                 ),
-              ],
-            ),
-          ),
-
-          // Title
-          Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 16),
-            child: Text(
-              issue.title,
-              style: const TextStyle(
-                fontSize: 15,
-                fontWeight: FontWeight.bold,
-                color: AppTheme.textPrimary,
               ),
-            ),
-          ),
-
-          const SizedBox(height: 8),
-
-          // Why It Matters
-          Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 16),
-            child: Container(
-              padding: const EdgeInsets.all(10),
-              decoration: BoxDecoration(
-                color: AppTheme.surfaceElevated,
-                borderRadius: BorderRadius.circular(10),
-              ),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  const Text(
-                    'WHY IT MATTERS',
-                    style: TextStyle(
-                      fontSize: 9,
-                      fontWeight: FontWeight.bold,
-                      color: AppTheme.textSecondary,
-                      letterSpacing: 0.4,
-                    ),
-                  ),
-                  const SizedBox(height: 3),
-                  Text(
-                    issue.whyItMatters,
-                    style: const TextStyle(
-                      fontSize: 12,
-                      color: AppTheme.textPrimary,
-                      height: 1.3,
-                    ),
-                  ),
-                ],
-              ),
-            ),
-          ),
-
-          const SizedBox(height: 10),
-
-          // Recommended Action & Expected Impact
-          Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 16),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Row(
-                  crossAxisAlignment: CrossAxisAlignment.start,
+              // Main Card Content
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
                   children: [
-                    const Icon(
-                      Icons.arrow_right_alt_rounded,
-                      color: AppTheme.primaryLight,
-                      size: 16,
-                    ),
-                    const SizedBox(width: 4),
-                    Expanded(
-                      child: RichText(
-                        text: TextSpan(
-                          style: const TextStyle(fontSize: 12, color: AppTheme.textPrimary),
-                          children: [
-                            const TextSpan(
-                              text: 'Action: ',
-                              style: TextStyle(fontWeight: FontWeight.bold),
+                    // Header with Priority Badge and Urgency
+                    Padding(
+                      padding: const EdgeInsets.fromLTRB(16, 14, 16, 10),
+                      child: Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                        children: [
+                          Container(
+                            padding: const EdgeInsets.symmetric(horizontal: 9, vertical: 3.5),
+                            decoration: BoxDecoration(
+                              color: color.withValues(alpha: 0.12),
+                              borderRadius: BorderRadius.circular(8),
+                              border: Border.all(color: color.withValues(alpha: 0.35)),
                             ),
-                            TextSpan(text: issue.recommendedAction),
-                          ],
-                        ),
-                      ),
-                    ),
-                  ],
-                ),
-                const SizedBox(height: 6),
-                Row(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    const Icon(
-                      Icons.auto_awesome,
-                      color: AppTheme.accentColor,
-                      size: 14,
-                    ),
-                    const SizedBox(width: 6),
-                    Expanded(
-                      child: RichText(
-                        text: TextSpan(
-                          style: const TextStyle(fontSize: 12, color: AppTheme.textSecondary),
-                          children: [
-                            const TextSpan(
-                              text: 'Expected Impact: ',
+                            child: Text(
+                              issue.priorityBadgeLabel,
                               style: TextStyle(
-                                fontWeight: FontWeight.bold,
-                                color: AppTheme.accentColor,
+                                color: color,
+                                fontSize: 10,
+                                fontWeight: FontWeight.w800,
+                                letterSpacing: 0.5,
                               ),
                             ),
-                            TextSpan(text: issue.expectedImpact),
+                          ),
+                          Row(
+                            children: [
+                              const Icon(
+                                Icons.schedule_rounded,
+                                size: 13,
+                                color: AppTheme.textSecondary,
+                              ),
+                              const SizedBox(width: 4),
+                              Text(
+                                issue.urgency,
+                                style: const TextStyle(
+                                  color: AppTheme.textSecondary,
+                                  fontSize: 11,
+                                  fontWeight: FontWeight.w600,
+                                ),
+                              ),
+                            ],
+                          ),
+                        ],
+                      ),
+                    ),
+
+                    // Title
+                    Padding(
+                      padding: const EdgeInsets.symmetric(horizontal: 16),
+                      child: Text(
+                        issue.title,
+                        style: const TextStyle(
+                          fontSize: 15,
+                          fontWeight: FontWeight.w800,
+                          color: AppTheme.textPrimary,
+                          letterSpacing: -0.2,
+                        ),
+                      ),
+                    ),
+
+                    const SizedBox(height: 10),
+
+                    // Why It Matters
+                    Padding(
+                      padding: const EdgeInsets.symmetric(horizontal: 16),
+                      child: Container(
+                        padding: const EdgeInsets.all(12),
+                        decoration: BoxDecoration(
+                          color: AppTheme.surfaceElevated,
+                          borderRadius: BorderRadius.circular(12),
+                          border: Border.all(color: AppTheme.borderColor.withValues(alpha: 0.6)),
+                        ),
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            const Text(
+                              'WHY IT MATTERS',
+                              style: TextStyle(
+                                fontSize: 9,
+                                fontWeight: FontWeight.w800,
+                                color: AppTheme.textSecondary,
+                                letterSpacing: 0.5,
+                              ),
+                            ),
+                            const SizedBox(height: 4),
+                            Text(
+                              issue.whyItMatters,
+                              style: const TextStyle(
+                                fontSize: 12,
+                                color: AppTheme.textPrimary,
+                                height: 1.35,
+                              ),
+                            ),
                           ],
                         ),
                       ),
                     ),
+
+                    const SizedBox(height: 12),
+
+                    // Recommended Action & Expected Impact
+                    Padding(
+                      padding: const EdgeInsets.symmetric(horizontal: 16),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Row(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              const Icon(
+                                Icons.arrow_right_alt_rounded,
+                                color: AppTheme.primaryLight,
+                                size: 16,
+                              ),
+                              const SizedBox(width: 6),
+                              Expanded(
+                                child: RichText(
+                                  text: TextSpan(
+                                    style: const TextStyle(fontSize: 12, color: AppTheme.textPrimary),
+                                    children: [
+                                      const TextSpan(
+                                        text: 'Action: ',
+                                        style: TextStyle(fontWeight: FontWeight.bold),
+                                      ),
+                                      TextSpan(text: issue.recommendedAction),
+                                    ],
+                                  ),
+                                ),
+                              ),
+                            ],
+                          ),
+                          const SizedBox(height: 6),
+                          Row(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              const Icon(
+                                Icons.auto_awesome_rounded,
+                                color: AppTheme.accentColor,
+                                size: 14,
+                              ),
+                              const SizedBox(width: 8),
+                              Expanded(
+                                child: RichText(
+                                  text: TextSpan(
+                                    style: const TextStyle(fontSize: 12, color: AppTheme.textSecondary),
+                                    children: [
+                                      const TextSpan(
+                                        text: 'Expected Impact: ',
+                                        style: TextStyle(
+                                          fontWeight: FontWeight.bold,
+                                          color: AppTheme.accentColor,
+                                        ),
+                                      ),
+                                      TextSpan(text: issue.expectedImpact),
+                                    ],
+                                  ),
+                                ),
+                              ),
+                            ],
+                          ),
+                        ],
+                      ),
+                    ),
+
+                    const SizedBox(height: 12),
+                    const Divider(height: 1, color: AppTheme.borderColor),
+
+                    // Action Link Execution Button
+                    Padding(
+                      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
+                      child: Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                        children: [
+                          Text(
+                            'Source: ${issue.sourceMetric}',
+                            style: const TextStyle(
+                              fontSize: 11,
+                              color: AppTheme.textMuted,
+                              fontWeight: FontWeight.w500,
+                            ),
+                          ),
+                          InkWell(
+                            onTap: () => onExecuteAction(issue),
+                            borderRadius: BorderRadius.circular(10),
+                            child: Container(
+                              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                              decoration: BoxDecoration(
+                                color: AppTheme.primaryNavy,
+                                borderRadius: BorderRadius.circular(10),
+                              ),
+                              child: Row(
+                                mainAxisSize: MainAxisSize.min,
+                                children: [
+                                  Icon(_getActionBtnIcon(), size: 13, color: Colors.white),
+                                  const SizedBox(width: 6),
+                                  Text(
+                                    _getActionBtnLabel(),
+                                    style: const TextStyle(
+                                      fontSize: 11,
+                                      fontWeight: FontWeight.bold,
+                                      color: Colors.white,
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
                   ],
                 ),
-              ],
-            ),
+              ),
+            ],
           ),
-
-          const SizedBox(height: 12),
-          const Divider(height: 1, color: AppTheme.borderColor),
-
-          // Action Link Execution Button
-          Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-            child: Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                Text(
-                  'Source: ${issue.sourceMetric}',
-                  style: const TextStyle(
-                    fontSize: 11,
-                    color: AppTheme.textMuted,
-                  ),
-                ),
-                TextButton.icon(
-                  onPressed: () => onExecuteAction(issue),
-                  icon: Icon(_getActionBtnIcon(), size: 15),
-                  label: Text(_getActionBtnLabel()),
-                  style: TextButton.styleFrom(
-                    foregroundColor: AppTheme.primaryNavy,
-                    textStyle: const TextStyle(
-                      fontSize: 12,
-                      fontWeight: FontWeight.bold,
-                    ),
-                    padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
-                  ),
-                ),
-              ],
-            ),
-          ),
-        ],
+        ),
       ),
     );
   }

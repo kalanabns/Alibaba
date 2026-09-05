@@ -14,12 +14,12 @@ class OnboardingGuideDialog extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Dialog(
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(26)),
       backgroundColor: AppTheme.surface,
       child: ConstrainedBox(
         constraints: const BoxConstraints(maxWidth: 480),
         child: Padding(
-          padding: const EdgeInsets.all(24.0),
+          padding: const EdgeInsets.all(26.0),
           child: SingleChildScrollView(
             child: Column(
               mainAxisSize: MainAxisSize.min,
@@ -28,15 +28,22 @@ class OnboardingGuideDialog extends StatelessWidget {
                 // Header Brand Icon
                 Center(
                   child: Container(
-                    padding: const EdgeInsets.all(14),
-                    decoration: const BoxDecoration(
-                      color: AppTheme.primaryNavy,
+                    width: 56,
+                    height: 56,
+                    decoration: BoxDecoration(
+                      gradient: AppTheme.primaryGradient,
                       shape: BoxShape.circle,
+                      boxShadow: [
+                        BoxShadow(
+                          color: AppTheme.primaryLight.withValues(alpha: 0.35),
+                          blurRadius: 14,
+                        ),
+                      ],
                     ),
                     child: const Icon(
-                      Icons.account_balance_wallet_rounded,
-                      color: AppTheme.primaryLight,
-                      size: 32,
+                      Icons.auto_awesome_rounded,
+                      color: Colors.white,
+                      size: 28,
                     ),
                   ),
                 ),
@@ -45,12 +52,13 @@ class OnboardingGuideDialog extends StatelessWidget {
                   'Welcome to Finora AI',
                   textAlign: TextAlign.center,
                   style: TextStyle(
-                    fontSize: 20,
-                    fontWeight: FontWeight.bold,
+                    fontSize: 21,
+                    fontWeight: FontWeight.w900,
                     color: AppTheme.textPrimary,
+                    letterSpacing: -0.3,
                   ),
                 ),
-                const SizedBox(height: 6),
+                const SizedBox(height: 4),
                 const Text(
                   'Your proactive AI CFO for small and medium-sized businesses.',
                   textAlign: TextAlign.center,
@@ -62,7 +70,7 @@ class OnboardingGuideDialog extends StatelessWidget {
                 _buildGuidePillar(
                   icon: Icons.shield_outlined,
                   color: AppTheme.accentColor,
-                  title: '1. Deterministic Health Score (0–100)',
+                  title: '1. Deterministic Health Radar (0–100)',
                   description:
                       'Finora calculates solvency, margins, cash flow, and runway using verified financial algorithms. Zero arithmetic hallucination.',
                 ),
@@ -91,24 +99,43 @@ class OnboardingGuideDialog extends StatelessWidget {
                 // Pillar 4: AI CFO Advisory
                 _buildGuidePillar(
                   icon: Icons.psychology_outlined,
-                  color: AppTheme.primaryNavy,
+                  color: AppTheme.cyberIndigo,
                   title: '4. Grounded AI CFO Decision Support',
                   description:
                       'Your AI CFO explains underlying financial trends, surfaces early risks, and drafts structured 1-2-3 action plans.',
                 ),
-                const SizedBox(height: 24),
+                const SizedBox(height: 26),
 
-                ElevatedButton(
-                  onPressed: () => Navigator.of(context).pop(),
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: AppTheme.primaryNavy,
-                    foregroundColor: Colors.white,
-                    minimumSize: const Size(double.infinity, 44),
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(10),
+                Container(
+                  height: 48,
+                  decoration: BoxDecoration(
+                    gradient: AppTheme.primaryGradient,
+                    borderRadius: BorderRadius.circular(14),
+                    boxShadow: [
+                      BoxShadow(
+                        color: AppTheme.primaryColor.withValues(alpha: 0.3),
+                        blurRadius: 10,
+                        offset: const Offset(0, 3),
+                      ),
+                    ],
+                  ),
+                  child: Material(
+                    color: Colors.transparent,
+                    child: InkWell(
+                      onTap: () => Navigator.of(context).pop(),
+                      borderRadius: BorderRadius.circular(14),
+                      child: const Center(
+                        child: Text(
+                          'Get Started',
+                          style: TextStyle(
+                            color: Colors.white,
+                            fontSize: 15,
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
+                      ),
                     ),
                   ),
-                  child: const Text('Get Started'),
                 ),
               ],
             ),
@@ -128,10 +155,11 @@ class OnboardingGuideDialog extends StatelessWidget {
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Container(
-          padding: const EdgeInsets.all(8),
+          padding: const EdgeInsets.all(9),
           decoration: BoxDecoration(
             color: color.withValues(alpha: 0.12),
-            borderRadius: BorderRadius.circular(8),
+            borderRadius: BorderRadius.circular(10),
+            border: Border.all(color: color.withValues(alpha: 0.25)),
           ),
           child: Icon(icon, size: 18, color: color),
         ),
@@ -154,7 +182,7 @@ class OnboardingGuideDialog extends StatelessWidget {
                 style: const TextStyle(
                   fontSize: 12,
                   color: AppTheme.textSecondary,
-                  height: 1.3,
+                  height: 1.35,
                 ),
               ),
             ],

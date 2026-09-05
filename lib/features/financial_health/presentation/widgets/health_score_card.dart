@@ -28,7 +28,7 @@ class HealthScoreCard extends StatelessWidget {
       isScrollControlled: true,
       backgroundColor: AppTheme.surface,
       shape: const RoundedRectangleBorder(
-        borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
+        borderRadius: BorderRadius.vertical(top: Radius.circular(28)),
       ),
       builder: (ctx) {
         return Padding(
@@ -43,6 +43,17 @@ class HealthScoreCard extends StatelessWidget {
               mainAxisSize: MainAxisSize.min,
               crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
+                Center(
+                  child: Container(
+                    width: 40,
+                    height: 4,
+                    decoration: BoxDecoration(
+                      color: AppTheme.borderColor,
+                      borderRadius: BorderRadius.circular(2),
+                    ),
+                  ),
+                ),
+                const SizedBox(height: 16),
                 Row(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
@@ -63,7 +74,7 @@ class HealthScoreCard extends StatelessWidget {
                     ),
                   ],
                 ),
-                const SizedBox(height: 8),
+                const SizedBox(height: 6),
                 const Text(
                   'Deterministic 100-point algorithm evaluating core SMB solvency and performance.',
                   style: TextStyle(fontSize: 13, color: AppTheme.textSecondary),
@@ -74,26 +85,27 @@ class HealthScoreCard extends StatelessWidget {
                 ),
                 const SizedBox(height: 16),
                 Container(
-                  padding: const EdgeInsets.all(12),
+                  padding: const EdgeInsets.all(14),
                   decoration: BoxDecoration(
                     color: AppTheme.surfaceElevated,
-                    borderRadius: BorderRadius.circular(12),
-                    border: Border.all(color: AppTheme.borderColor),
+                    borderRadius: BorderRadius.circular(16),
+                    border: Border.all(color: AppTheme.borderColor.withValues(alpha: 0.8)),
                   ),
                   child: const Row(
                     children: [
                       Icon(
-                        Icons.verified_outlined,
+                        Icons.verified_rounded,
                         size: 20,
                         color: AppTheme.primaryColor,
                       ),
                       SizedBox(width: 10),
                       Expanded(
                         child: Text(
-                          'Calculated deterministically by Finora Engine. Zero AI hallucination.',
+                          'Calculated deterministically by Finora Engine. Zero AI arithmetic hallucination.',
                           style: TextStyle(
                             fontSize: 12,
                             color: AppTheme.textSecondary,
+                            fontWeight: FontWeight.w500,
                           ),
                         ),
                       ),
@@ -119,8 +131,8 @@ class HealthScoreCard extends StatelessWidget {
       padding: const EdgeInsets.all(14),
       decoration: BoxDecoration(
         color: AppTheme.surfaceElevated,
-        borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: AppTheme.borderColor),
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: AppTheme.borderColor.withValues(alpha: 0.8)),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -136,19 +148,26 @@ class HealthScoreCard extends StatelessWidget {
                   color: AppTheme.textPrimary,
                 ),
               ),
-              Text(
-                '${component.score.toStringAsFixed(0)} / ${component.maxScore.toStringAsFixed(0)} pts',
-                style: TextStyle(
-                  fontSize: 13,
-                  fontWeight: FontWeight.bold,
-                  color: color,
+              Container(
+                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                decoration: BoxDecoration(
+                  color: color.withValues(alpha: 0.15),
+                  borderRadius: BorderRadius.circular(8),
+                ),
+                child: Text(
+                  '${component.score.toStringAsFixed(0)} / ${component.maxScore.toStringAsFixed(0)} pts',
+                  style: TextStyle(
+                    fontSize: 12,
+                    fontWeight: FontWeight.bold,
+                    color: color,
+                  ),
                 ),
               ),
             ],
           ),
-          const SizedBox(height: 8),
+          const SizedBox(height: 10),
           ClipRRect(
-            borderRadius: BorderRadius.circular(4),
+            borderRadius: BorderRadius.circular(6),
             child: LinearProgressIndicator(
               value: pct,
               minHeight: 6,
@@ -162,7 +181,7 @@ class HealthScoreCard extends StatelessWidget {
             style: const TextStyle(
               fontSize: 12,
               color: AppTheme.textSecondary,
-              height: 1.3,
+              height: 1.35,
             ),
           ),
         ],
@@ -176,42 +195,42 @@ class HealthScoreCard extends StatelessWidget {
     final scoreInt = breakdown.totalScore.round();
 
     return Container(
-      padding: const EdgeInsets.all(20),
+      padding: const EdgeInsets.all(22),
       decoration: BoxDecoration(
-        gradient: const LinearGradient(
-          begin: Alignment.topLeft,
-          end: Alignment.bottomRight,
-          colors: [AppTheme.primaryNavy, AppTheme.secondaryNavy],
-        ),
-        borderRadius: BorderRadius.circular(20),
-        boxShadow: [
-          BoxShadow(
-            color: AppTheme.primaryNavy.withValues(alpha: 0.18),
-            blurRadius: 14,
-            offset: const Offset(0, 5),
-          ),
-        ],
+        gradient: AppTheme.heroGradient,
+        borderRadius: BorderRadius.circular(26),
+        border: Border.all(color: const Color(0x3538BDF8), width: 1.2),
+        boxShadow: AppTheme.heroShadow,
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
+          // Header Row
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              const Row(
+              Row(
                 children: [
-                  Icon(
-                    Icons.shield_outlined,
-                    size: 20,
-                    color: AppTheme.primaryLight,
+                  Container(
+                    padding: const EdgeInsets.all(6),
+                    decoration: BoxDecoration(
+                      color: AppTheme.primaryLight.withValues(alpha: 0.15),
+                      borderRadius: BorderRadius.circular(8),
+                    ),
+                    child: const Icon(
+                      Icons.shield_outlined,
+                      size: 16,
+                      color: AppTheme.primaryLight,
+                    ),
                   ),
-                  SizedBox(width: 8),
-                  Text(
-                    'Financial Health Score',
+                  const SizedBox(width: 8),
+                  const Text(
+                    'FINANCIAL HEALTH RADAR',
                     style: TextStyle(
                       color: Color(0xFF94A3B8),
-                      fontSize: 14,
-                      fontWeight: FontWeight.w600,
+                      fontSize: 12,
+                      fontWeight: FontWeight.w700,
+                      letterSpacing: 0.6,
                     ),
                   ),
                 ],
@@ -222,46 +241,67 @@ class HealthScoreCard extends StatelessWidget {
                   vertical: 4,
                 ),
                 decoration: BoxDecoration(
-                  color: bandColor.withValues(alpha: 0.2),
+                  color: bandColor.withValues(alpha: 0.18),
                   borderRadius: BorderRadius.circular(20),
-                  border: Border.all(color: bandColor.withValues(alpha: 0.6)),
+                  border: Border.all(color: bandColor.withValues(alpha: 0.5)),
+                  boxShadow: [
+                    BoxShadow(
+                      color: bandColor.withValues(alpha: 0.25),
+                      blurRadius: 8,
+                    ),
+                  ],
                 ),
                 child: Text(
                   breakdown.bandLabel.toUpperCase(),
                   style: TextStyle(
                     color: bandColor,
-                    fontWeight: FontWeight.bold,
+                    fontWeight: FontWeight.w800,
                     fontSize: 11,
-                    letterSpacing: 0.5,
+                    letterSpacing: 0.6,
                   ),
                 ),
               ),
             ],
           ),
-          const SizedBox(height: 16),
+          const SizedBox(height: 18),
+          // Circular Score Display & Summary
           Row(
             children: [
-              // Circular Score Display
+              // High-Tech Cyber Radar Gauge
               SizedBox(
-                width: 76,
-                height: 76,
+                width: 84,
+                height: 84,
                 child: Stack(
                   fit: StackFit.expand,
                   children: [
                     CircularProgressIndicator(
                       value: (breakdown.totalScore / 100.0).clamp(0.0, 1.0),
-                      strokeWidth: 7,
-                      backgroundColor: Colors.white12,
+                      strokeWidth: 8,
+                      backgroundColor: Colors.white.withValues(alpha: 0.08),
                       valueColor: AlwaysStoppedAnimation<Color>(bandColor),
                     ),
                     Center(
-                      child: Text(
-                        '$scoreInt',
-                        style: const TextStyle(
-                          fontSize: 24,
-                          fontWeight: FontWeight.bold,
-                          color: Colors.white,
-                        ),
+                      child: Column(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          Text(
+                            '$scoreInt',
+                            style: const TextStyle(
+                              fontSize: 26,
+                              fontWeight: FontWeight.w900,
+                              color: Colors.white,
+                              letterSpacing: -0.5,
+                            ),
+                          ),
+                          Text(
+                            '/100',
+                            style: TextStyle(
+                              fontSize: 10,
+                              fontWeight: FontWeight.w600,
+                              color: Colors.white.withValues(alpha: 0.6),
+                            ),
+                          ),
+                        ],
                       ),
                     ),
                   ],
@@ -278,7 +318,8 @@ class HealthScoreCard extends StatelessWidget {
                       style: const TextStyle(
                         color: Color(0xFFF1F5F9),
                         fontSize: 13,
-                        height: 1.4,
+                        height: 1.45,
+                        fontWeight: FontWeight.w400,
                       ),
                       maxLines: 3,
                       overflow: TextOverflow.ellipsis,
@@ -286,24 +327,34 @@ class HealthScoreCard extends StatelessWidget {
                     const SizedBox(height: 8),
                     InkWell(
                       onTap: () => _showBreakdownSheet(context),
-                      borderRadius: BorderRadius.circular(6),
-                      child: const Padding(
-                        padding: EdgeInsets.symmetric(vertical: 2),
-                        child: Row(
+                      borderRadius: BorderRadius.circular(8),
+                      child: Container(
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 10,
+                          vertical: 4,
+                        ),
+                        decoration: BoxDecoration(
+                          color: AppTheme.primaryLight.withValues(alpha: 0.12),
+                          borderRadius: BorderRadius.circular(8),
+                          border: Border.all(
+                            color: AppTheme.primaryLight.withValues(alpha: 0.25),
+                          ),
+                        ),
+                        child: const Row(
                           mainAxisSize: MainAxisSize.min,
                           children: [
                             Text(
-                              'View 5-Point Breakdown',
+                              'View 5-Factor Diagnostics',
                               style: TextStyle(
                                 color: AppTheme.primaryLight,
-                                fontSize: 12,
+                                fontSize: 11,
                                 fontWeight: FontWeight.bold,
                               ),
                             ),
                             SizedBox(width: 4),
                             Icon(
-                              Icons.chevron_right,
-                              size: 16,
+                              Icons.arrow_forward_rounded,
+                              size: 13,
                               color: AppTheme.primaryLight,
                             ),
                           ],
@@ -315,30 +366,37 @@ class HealthScoreCard extends StatelessWidget {
               ),
             ],
           ),
+          const SizedBox(height: 16),
+          const Divider(height: 1, color: Color(0x20FFFFFF)),
           const SizedBox(height: 14),
-          const Divider(height: 1, color: Colors.white12),
-          const SizedBox(height: 12),
           // Strongest Positive & Weakest Factors Row
           Row(
             children: [
               Expanded(
                 child: Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 7),
+                  padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
                   decoration: BoxDecoration(
-                    color: AppTheme.accentColor.withValues(alpha: 0.14),
-                    borderRadius: BorderRadius.circular(8),
+                    color: Colors.white.withValues(alpha: 0.05),
+                    borderRadius: BorderRadius.circular(12),
                     border: Border.all(
                       color: AppTheme.accentColor.withValues(alpha: 0.3),
                     ),
                   ),
                   child: Row(
                     children: [
-                      const Icon(
-                        Icons.check_circle_rounded,
-                        color: AppTheme.accentColor,
-                        size: 14,
+                      Container(
+                        padding: const EdgeInsets.all(4),
+                        decoration: BoxDecoration(
+                          color: AppTheme.accentColor.withValues(alpha: 0.2),
+                          shape: BoxShape.circle,
+                        ),
+                        child: const Icon(
+                          Icons.check_rounded,
+                          color: AppTheme.accentColor,
+                          size: 12,
+                        ),
                       ),
-                      const SizedBox(width: 6),
+                      const SizedBox(width: 8),
                       Expanded(
                         child: Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
@@ -348,8 +406,8 @@ class HealthScoreCard extends StatelessWidget {
                               style: TextStyle(
                                 color: AppTheme.accentColor,
                                 fontSize: 9,
-                                fontWeight: FontWeight.bold,
-                                letterSpacing: 0.4,
+                                fontWeight: FontWeight.w800,
+                                letterSpacing: 0.5,
                               ),
                             ),
                             Text(
@@ -372,22 +430,29 @@ class HealthScoreCard extends StatelessWidget {
               const SizedBox(width: 10),
               Expanded(
                 child: Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 7),
+                  padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
                   decoration: BoxDecoration(
-                    color: AppTheme.warningColor.withValues(alpha: 0.14),
-                    borderRadius: BorderRadius.circular(8),
+                    color: Colors.white.withValues(alpha: 0.05),
+                    borderRadius: BorderRadius.circular(12),
                     border: Border.all(
                       color: AppTheme.warningColor.withValues(alpha: 0.3),
                     ),
                   ),
                   child: Row(
                     children: [
-                      const Icon(
-                        Icons.warning_amber_rounded,
-                        color: AppTheme.warningColor,
-                        size: 14,
+                      Container(
+                        padding: const EdgeInsets.all(4),
+                        decoration: BoxDecoration(
+                          color: AppTheme.warningColor.withValues(alpha: 0.2),
+                          shape: BoxShape.circle,
+                        ),
+                        child: const Icon(
+                          Icons.priority_high_rounded,
+                          color: AppTheme.warningColor,
+                          size: 12,
+                        ),
                       ),
-                      const SizedBox(width: 6),
+                      const SizedBox(width: 8),
                       Expanded(
                         child: Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
@@ -397,8 +462,8 @@ class HealthScoreCard extends StatelessWidget {
                               style: TextStyle(
                                 color: AppTheme.warningColor,
                                 fontSize: 9,
-                                fontWeight: FontWeight.bold,
-                                letterSpacing: 0.4,
+                                fontWeight: FontWeight.w800,
+                                letterSpacing: 0.5,
                               ),
                             ),
                             Text(

@@ -1,6 +1,9 @@
+import '../../ai_cfo/domain/cfo_action_item.dart';
 import '../../alerts/domain/alert.dart';
+import '../../alerts/domain/priority_ranking_engine.dart';
 import '../../businesses/domain/business.dart';
 import '../../financial_health/domain/financial_engine.dart';
+import '../../financial_health/domain/financial_goal.dart';
 import '../../financial_health/domain/financial_metric.dart';
 import '../../financial_health/domain/health_score_breakdown.dart';
 import '../../forecasts/domain/forecast.dart';
@@ -16,6 +19,8 @@ class DemoDataset {
     required this.buckets,
     required this.alerts,
     required this.forecasts,
+    required this.goals,
+    required this.actionPlan,
   });
 
   final Business business;
@@ -26,6 +31,8 @@ class DemoDataset {
   final List<MonthlyFinancialBucket> buckets;
   final List<Alert> alerts;
   final List<Forecast> forecasts;
+  final List<FinancialGoal> goals;
+  final List<CfoActionItem> actionPlan;
 }
 
 class DemoBusinessService {
@@ -356,6 +363,105 @@ class DemoBusinessService {
       ),
     ];
 
+    // Realistic Financial Goals
+    final goals = [
+      FinancialGoal(
+        id: 'goal_demo_1',
+        businessId: demoBusinessId,
+        title: 'Build Operating Cash Reserve (\$35,000)',
+        goalType: GoalType.targetCashReserve,
+        targetValue: 35000.0,
+        currentValue: 28500.0,
+        unit: '\$',
+        targetDate: now.add(const Duration(days: 90)),
+        status: GoalStatus.onTrack,
+        createdAt: now.subtract(const Duration(days: 20)),
+        updatedAt: now,
+      ),
+      FinancialGoal(
+        id: 'goal_demo_2',
+        businessId: demoBusinessId,
+        title: 'Cap Monthly Operating Expenses (\$58,000)',
+        goalType: GoalType.expenseLimit,
+        targetValue: 58000.0,
+        currentValue: 64800.0,
+        unit: '\$',
+        targetDate: now.add(const Duration(days: 60)),
+        status: GoalStatus.behindTarget,
+        createdAt: now.subtract(const Duration(days: 15)),
+        updatedAt: now,
+      ),
+      FinancialGoal(
+        id: 'goal_demo_3',
+        businessId: demoBusinessId,
+        title: 'Restore Net Profit Margin to 18%',
+        goalType: GoalType.targetProfitMargin,
+        targetValue: 18.0,
+        currentValue: 10.6,
+        unit: '%',
+        targetDate: now.add(const Duration(days: 120)),
+        status: GoalStatus.behindTarget,
+        createdAt: now.subtract(const Duration(days: 10)),
+        updatedAt: now,
+      ),
+    ];
+
+    // Realistic CFO Action Plan Items
+    final actionPlan = [
+      CfoActionItem(
+        id: 'action_demo_1',
+        businessId: demoBusinessId,
+        title: 'Collect Overdue Accounts Receivable (\$18,500)',
+        reason: 'Delayed collections have driven operating cash flow into a -\$4,200 deficit.',
+        priority: PriorityLevel.critical,
+        urgency: 'Immediate (Next 7 Days)',
+        relatedMetric: 'Accounts Receivable',
+        recommendedNextStep: 'Issue 2% Net-10 payment terms and follow up with top 3 pending accounts.',
+        actionType: ActionLinkType.collectReceivables,
+        status: CfoActionStatus.todo,
+        createdAt: now.subtract(const Duration(days: 2)),
+      ),
+      CfoActionItem(
+        id: 'action_demo_2',
+        businessId: demoBusinessId,
+        title: 'Renegotiate Coffee Bean Import Contract',
+        reason: 'Green bean supplies rose 18% MoM, compressing gross margin from 42% to 34%.',
+        priority: PriorityLevel.high,
+        urgency: 'Within 14 Days',
+        relatedMetric: 'Cost of Goods Sold',
+        recommendedNextStep: 'Consolidate orders with Antioquia Bean Importers to secure 8% bulk discount.',
+        actionType: ActionLinkType.runScenario,
+        status: CfoActionStatus.inProgress,
+        createdAt: now.subtract(const Duration(days: 3)),
+      ),
+      CfoActionItem(
+        id: 'action_demo_3',
+        businessId: demoBusinessId,
+        title: 'Audit & Trim Unused SaaS Subscriptions',
+        reason: 'Software expenses reached \$890/mo across overlapping operational tools.',
+        priority: PriorityLevel.medium,
+        urgency: 'Within 30 Days',
+        relatedMetric: 'Software Expenses',
+        recommendedNextStep: 'Cancel redundant analytics licenses and downgrade unused seat tiers.',
+        actionType: ActionLinkType.reviewExpenses,
+        status: CfoActionStatus.todo,
+        createdAt: now.subtract(const Duration(days: 5)),
+      ),
+      CfoActionItem(
+        id: 'action_demo_4',
+        businessId: demoBusinessId,
+        title: 'Establish 90-Day Cash Flow Runway Buffer',
+        reason: 'Current cash reserve covers ~4.2 months of burn at existing negative net cash rates.',
+        priority: PriorityLevel.medium,
+        urgency: 'Within 60 Days',
+        relatedMetric: 'Cash Runway',
+        recommendedNextStep: 'Automate weekly liquidity review and simulate hiring freeze scenarios.',
+        actionType: ActionLinkType.runScenario,
+        status: CfoActionStatus.todo,
+        createdAt: now.subtract(const Duration(days: 7)),
+      ),
+    ];
+
     return DemoDataset(
       business: business,
       transactions: transactions,
@@ -365,6 +471,8 @@ class DemoBusinessService {
       buckets: buckets,
       alerts: alerts,
       forecasts: forecasts,
+      goals: goals,
+      actionPlan: actionPlan,
     );
   }
 }
