@@ -49,6 +49,7 @@ class _BusinessOnboardingScreenState extends State<BusinessOnboardingScreen> {
     'Canada': 'CAD',
     'United Arab Emirates': 'AED',
     'Singapore': 'SGD',
+    'Sri Lanka': 'LKR',
     'Other': 'USD',
   };
 
@@ -57,6 +58,7 @@ class _BusinessOnboardingScreenState extends State<BusinessOnboardingScreen> {
     'EUR',
     'GBP',
     'INR',
+    'LKR',
     'AED',
     'SGD',
     'AUD',
