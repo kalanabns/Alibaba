@@ -1,4 +1,5 @@
 import 'package:flutter/foundation.dart';
+import '../../../core/utilities/money_formatter.dart';
 import '../../ai_cfo/data/ai_cfo_repository.dart';
 import '../../financial_health/domain/financial_metric.dart';
 import '../../transactions/domain/transaction.dart';
@@ -100,11 +101,12 @@ class SimulationController extends ChangeNotifier {
   void runSimulation({
     required FinancialMetric baselineMetric,
     List<Transaction> transactions = const [],
+    String currency = 'USD',
   }) {
     final assumption = ScenarioAssumption(
       type: _selectedType,
       name: _scenarioName,
-      description: _buildDescription(),
+      description: _buildDescription(currency: currency),
       percentageDelta: _percentageDelta,
       targetCategory: _targetCategory,
       fixedAmountDelta: _fixedAmountDelta,
@@ -114,11 +116,12 @@ class SimulationController extends ChangeNotifier {
       baselineMetric: baselineMetric,
       assumption: assumption,
       transactions: transactions,
+      currency: currency,
     );
     notifyListeners();
   }
 
-  String _buildDescription() {
+  String _buildDescription({String currency = 'USD'}) {
     switch (_selectedType) {
       case ScenarioType.revenueDelta:
         return 'Adjust total revenue by ${_percentageDelta >= 0 ? '+' : ''}${_percentageDelta.toStringAsFixed(1)}%';
@@ -129,7 +132,8 @@ class SimulationController extends ChangeNotifier {
       case ScenarioType.pricingAdjustment:
         return 'Adjust product/service pricing by ${_percentageDelta >= 0 ? '+' : ''}${_percentageDelta.toStringAsFixed(1)}%';
       case ScenarioType.headcountAddition:
-        return 'Add new staff costing \$${_fixedAmountDelta.toStringAsFixed(0)}/month';
+        final symbol = MoneyFormatter.getCurrencySymbol(currency);
+        return 'Add new staff costing $symbol${_fixedAmountDelta.toStringAsFixed(0)}/month';
     }
   }
 
@@ -189,6 +193,7 @@ class SimulationController extends ChangeNotifier {
     required String businessId,
     required String businessName,
     required String industry,
+    String currency = 'USD',
   }) async {
     if (_currentResult == null) return;
 
@@ -197,12 +202,13 @@ class SimulationController extends ChangeNotifier {
     notifyListeners();
 
     try {
+      final symbol = MoneyFormatter.getCurrencySymbol(currency);
       final prompt =
           'Evaluate this What-If financial simulation for $businessName ($industry):\n'
           'Scenario: ${_currentResult!.assumption.name} (${_currentResult!.assumption.description})\n'
-          'Baseline Revenue: \$${_currentResult!.baselineRevenue.toStringAsFixed(0)}, Baseline Profit: \$${_currentResult!.baselineProfit.toStringAsFixed(0)}, Margin: ${_currentResult!.baselineMargin.toStringAsFixed(1)}%, Health Score: ${_currentResult!.baselineHealthScore.toStringAsFixed(0)}\n'
-          'Projected Revenue: \$${_currentResult!.projectedRevenue.toStringAsFixed(0)}, Projected Profit: \$${_currentResult!.projectedProfit.toStringAsFixed(0)}, Projected Margin: ${_currentResult!.projectedMargin.toStringAsFixed(1)}%, Projected Health Score: ${_currentResult!.projectedHealthScore.toStringAsFixed(0)}\n'
-          'Profit Delta: \$${_currentResult!.profitDelta >= 0 ? '+' : ''}${_currentResult!.profitDelta.toStringAsFixed(0)}, Margin Delta: ${_currentResult!.marginDelta >= 0 ? '+' : ''}${_currentResult!.marginDelta.toStringAsFixed(1)}%\n'
+          'Baseline Revenue: $symbol${_currentResult!.baselineRevenue.toStringAsFixed(0)}, Baseline Profit: $symbol${_currentResult!.baselineProfit.toStringAsFixed(0)}, Margin: ${_currentResult!.baselineMargin.toStringAsFixed(1)}%, Health Score: ${_currentResult!.baselineHealthScore.toStringAsFixed(0)}\n'
+          'Projected Revenue: $symbol${_currentResult!.projectedRevenue.toStringAsFixed(0)}, Projected Profit: $symbol${_currentResult!.projectedProfit.toStringAsFixed(0)}, Projected Margin: ${_currentResult!.projectedMargin.toStringAsFixed(1)}%, Projected Health Score: ${_currentResult!.projectedHealthScore.toStringAsFixed(0)}\n'
+          'Profit Delta: $symbol${_currentResult!.profitDelta >= 0 ? '+' : ''}${_currentResult!.profitDelta.toStringAsFixed(0)}, Margin Delta: ${_currentResult!.marginDelta >= 0 ? '+' : ''}${_currentResult!.marginDelta.toStringAsFixed(1)}%\n'
           'Trade-offs: ${_currentResult!.tradeOffs.join('; ')}\n'
           'Please provide 2-3 concise, actionable strategic trade-offs and recommendations for the business owner.';
 

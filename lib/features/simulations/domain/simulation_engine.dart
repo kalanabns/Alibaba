@@ -1,4 +1,5 @@
 import 'dart:math' as math;
+import '../../../core/utilities/money_formatter.dart';
 import '../../financial_health/domain/financial_engine.dart';
 import '../../financial_health/domain/financial_metric.dart';
 import '../../transactions/domain/transaction.dart';
@@ -146,6 +147,7 @@ class SimulationEngine {
     required FinancialMetric baselineMetric,
     required ScenarioAssumption assumption,
     List<Transaction> transactions = const [],
+    String currency = 'USD',
   }) {
     final baseRev = baselineMetric.revenue;
     final baseExp = baselineMetric.expenses;
@@ -217,14 +219,22 @@ class SimulationEngine {
         projExp = math.max(0.0, baseExp + savingOrCost);
 
         if (savingOrCost <= 0) {
+          final formattedSaving = MoneyFormatter.format(
+            -savingOrCost,
+            currency: currency,
+          );
           summary =
-              'Optimizing $category budget saves \$${(-savingOrCost).toStringAsFixed(2)} per reporting period.';
+              'Optimizing $category budget saves $formattedSaving per reporting period.';
           tradeOffs.add(
             'Audit vendor contracts to capture savings without slowing customer acquisition or delivery.',
           );
         } else {
+          final formattedCost = MoneyFormatter.format(
+            savingOrCost,
+            currency: currency,
+          );
           summary =
-              'Expanding $category budget adds \$${savingOrCost.toStringAsFixed(2)} in periodic overhead.';
+              'Expanding $category budget adds $formattedCost in periodic overhead.';
           tradeOffs.add(
             'Monitor return on investment (ROI) closely to confirm the additional spending generates matching revenue.',
           );
@@ -245,8 +255,12 @@ class SimulationEngine {
       case ScenarioType.headcountAddition:
         final monthlyCost = assumption.fixedAmountDelta;
         projExp = baseExp + monthlyCost;
+        final formattedCost = MoneyFormatter.format(
+          monthlyCost,
+          currency: currency,
+        );
         summary =
-            'Adding headcount increases monthly payroll obligations by \$${monthlyCost.toStringAsFixed(2)}.';
+            'Adding headcount increases monthly payroll obligations by $formattedCost.';
         tradeOffs.add(
           'Consider ramp-up time before the new hire generates offsetting productivity or revenue.',
         );

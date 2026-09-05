@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import '../../../../core/theme/app_theme.dart';
+import '../../../../core/utilities/money_formatter.dart';
 
 class SimulationDeltaCard extends StatelessWidget {
   const SimulationDeltaCard({
@@ -9,6 +10,7 @@ class SimulationDeltaCard extends StatelessWidget {
     required this.projectedValue,
     required this.deltaValue,
     required this.isCurrency,
+    this.currency = 'USD',
     this.isPercentage = false,
     this.higherIsBetter = true,
     required this.icon,
@@ -19,6 +21,7 @@ class SimulationDeltaCard extends StatelessWidget {
   final double projectedValue;
   final double deltaValue;
   final bool isCurrency;
+  final String currency;
   final bool isPercentage;
   final bool higherIsBetter;
   final IconData icon;
@@ -56,18 +59,28 @@ class SimulationDeltaCard extends StatelessWidget {
       if (isPercentage) {
         return '${val.toStringAsFixed(1)}%';
       } else if (isCurrency) {
-        return '\$${val.abs().toStringAsFixed(0)}';
+        return MoneyFormatter.format(
+          val.abs(),
+          currency: currency,
+          decimals: 0,
+        );
       }
       return val.toStringAsFixed(0);
     }
 
     String formatDelta(double val) {
-      final sign = val > 0 ? '+' : (val < 0 ? '-' : '');
       if (isPercentage) {
+        final sign = val > 0 ? '+' : (val < 0 ? '-' : '');
         return '$sign${val.abs().toStringAsFixed(1)}%';
       } else if (isCurrency) {
-        return '$sign\$${val.abs().toStringAsFixed(0)}';
+        return MoneyFormatter.format(
+          val,
+          currency: currency,
+          showSign: true,
+          decimals: 0,
+        );
       }
+      final sign = val > 0 ? '+' : (val < 0 ? '-' : '');
       return '$sign${val.abs().toStringAsFixed(0)} pts';
     }
 
