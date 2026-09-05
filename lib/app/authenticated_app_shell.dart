@@ -467,16 +467,26 @@ class _AuthenticatedAppShellState extends State<AuthenticatedAppShell> {
 
   PreferredSizeWidget _buildFuturisticHeader(BuildContext context, Business business) {
     return PreferredSize(
-      preferredSize: const Size.fromHeight(68),
+      preferredSize: const Size.fromHeight(128),
       child: Container(
         decoration: BoxDecoration(
-          gradient: AppTheme.heroGradient,
+          gradient: const LinearGradient(
+            begin: Alignment.topLeft,
+            end: Alignment.bottomRight,
+            colors: [
+              Color(0xFF1D55D8),
+              Color(0xFF2563EB),
+              Color(0xFF3B82F6),
+              Color(0xFF4F46E5),
+            ],
+            stops: [0.0, 0.35, 0.70, 1.0],
+          ),
           border: const Border(
-            bottom: BorderSide(color: Color(0x3338BDF8), width: 1.2),
+            bottom: BorderSide(color: Color(0x3338BDF8), width: 1.0),
           ),
           boxShadow: [
             BoxShadow(
-              color: const Color(0xFF102D5E).withValues(alpha: 0.25),
+              color: const Color(0xFF1D4ED8).withValues(alpha: 0.25),
               blurRadius: 16,
               offset: const Offset(0, 4),
             ),
@@ -485,139 +495,153 @@ class _AuthenticatedAppShellState extends State<AuthenticatedAppShell> {
         child: SafeArea(
           bottom: false,
           child: Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-            child: Row(
+            padding: const EdgeInsets.fromLTRB(16, 8, 16, 12),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
               children: [
-                // Glowing Business Avatar
-                Container(
-                  width: 40,
-                  height: 40,
-                  decoration: BoxDecoration(
-                    gradient: AppTheme.primaryGradient,
-                    borderRadius: BorderRadius.circular(12),
-                    boxShadow: [
-                      BoxShadow(
-                        color: AppTheme.primaryLight.withValues(alpha: 0.3),
-                        blurRadius: 10,
-                        offset: const Offset(0, 2),
+                // Top Profile & Action Row
+                Row(
+                  children: [
+                    // Glowing Glass Avatar
+                    Container(
+                      width: 46,
+                      height: 46,
+                      decoration: BoxDecoration(
+                        color: Colors.white.withValues(alpha: 0.18),
+                        borderRadius: BorderRadius.circular(16),
+                        border: Border.all(
+                          color: Colors.white.withValues(alpha: 0.25),
+                          width: 1.2,
+                        ),
                       ),
-                    ],
-                  ),
-                  child: const Icon(
-                    Icons.auto_awesome_rounded,
-                    color: Colors.white,
-                    size: 20,
-                  ),
-                ),
-                const SizedBox(width: 12),
-                // Title & Subtitle Info
-                Expanded(
-                  child: Column(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Row(
-                        children: [
-                          Flexible(
-                            child: Text(
-                              business.name,
-                              style: const TextStyle(
-                                fontSize: 16,
-                                fontWeight: FontWeight.w800,
-                                color: Colors.white,
-                                letterSpacing: -0.2,
+                      child: const Icon(
+                        Icons.auto_awesome_rounded,
+                        color: Colors.white,
+                        size: 22,
+                      ),
+                    ),
+                    const SizedBox(width: 12),
+                    // Business Title + Subtitle
+                    Expanded(
+                      child: GestureDetector(
+                        onTap: () => _showBusinessHubSheet(context, business),
+                        behavior: HitTestBehavior.opaque,
+                        child: Column(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Row(
+                              mainAxisSize: MainAxisSize.min,
+                              children: [
+                                Flexible(
+                                  child: Text(
+                                    business.name,
+                                    style: const TextStyle(
+                                      fontSize: 18,
+                                      fontWeight: FontWeight.w700,
+                                      color: Colors.white,
+                                      letterSpacing: -0.2,
+                                    ),
+                                    maxLines: 1,
+                                    overflow: TextOverflow.ellipsis,
+                                  ),
+                                ),
+                                const SizedBox(width: 4),
+                                Icon(
+                                  Icons.keyboard_arrow_down_rounded,
+                                  color: Colors.white.withValues(alpha: 0.9),
+                                  size: 20,
+                                ),
+                              ],
+                            ),
+                            const SizedBox(height: 2),
+                            Text(
+                              widget.businessController.isDemoMode
+                                  ? '${business.currency} • Demo Active'
+                                  : '${business.currency} • Transactions Sync Active',
+                              style: TextStyle(
+                                fontSize: 12.5,
+                                color: Colors.white.withValues(alpha: 0.82),
+                                fontWeight: FontWeight.w400,
                               ),
                               maxLines: 1,
                               overflow: TextOverflow.ellipsis,
                             ),
-                          ),
-                          if (widget.businessController.isDemoMode) ...[
-                            const SizedBox(width: 6),
-                            Container(
-                              padding: const EdgeInsets.symmetric(
-                                horizontal: 6,
-                                vertical: 2,
-                              ),
-                              decoration: BoxDecoration(
-                                gradient: AppTheme.amberGradient,
-                                borderRadius: BorderRadius.circular(6),
-                                boxShadow: [
-                                  BoxShadow(
-                                    color: AppTheme.warningColor.withValues(alpha: 0.3),
-                                    blurRadius: 6,
-                                  ),
-                                ],
-                              ),
-                              child: const Text(
-                                'DEMO',
-                                style: TextStyle(
-                                  color: Colors.white,
-                                  fontSize: 9,
-                                  fontWeight: FontWeight.w800,
-                                  letterSpacing: 0.5,
-                                ),
-                              ),
-                            ),
                           ],
-                        ],
-                      ),
-                      const SizedBox(height: 2),
-                      Text(
-                        '${business.currency} • ${business.industry ?? "General"}',
-                        style: const TextStyle(
-                          fontSize: 11,
-                          color: Color(0xFF94A3B8),
-                          fontWeight: FontWeight.w500,
                         ),
                       ),
-                    ],
-                  ),
+                    ),
+                    const SizedBox(width: 8),
+                    // Action / Exit Button
+                    Material(
+                      color: Colors.transparent,
+                      child: InkWell(
+                        onTap: widget.businessController.isDemoMode
+                            ? widget.businessController.exitDemoMode
+                            : _handleSignOut,
+                        borderRadius: BorderRadius.circular(16),
+                        child: Container(
+                          width: 46,
+                          height: 46,
+                          decoration: BoxDecoration(
+                            color: Colors.white.withValues(alpha: 0.18),
+                            borderRadius: BorderRadius.circular(16),
+                            border: Border.all(
+                              color: Colors.white.withValues(alpha: 0.25),
+                              width: 1.2,
+                            ),
+                          ),
+                          child: Icon(
+                            widget.businessController.isDemoMode
+                                ? Icons.exit_to_app_rounded
+                                : Icons.logout_rounded,
+                            color: Colors.white,
+                            size: 20,
+                          ),
+                        ),
+                      ),
+                    ),
+                  ],
                 ),
-                // Quick Action Action-Pills
-                _buildHeaderIconButton(
-                  icon: Icons.insights_rounded,
-                  tooltip: 'Advanced BI Analytics',
-                  onTap: () => _openAnalyticsScreen(context),
-                  accentColor: AppTheme.accentColor,
+
+                // Fine Translucent Divider Line
+                Container(
+                  height: 1,
+                  margin: const EdgeInsets.only(top: 12, bottom: 10),
+                  color: Colors.white.withValues(alpha: 0.16),
                 ),
-                const SizedBox(width: 6),
-                _buildHeaderIconButton(
-                  icon: Icons.checklist_rtl_rounded,
-                  tooltip: 'CFO Action Plan',
-                  onTap: () => _openActionPlanScreen(context),
-                  accentColor: AppTheme.cyberIndigo,
-                ),
-                const SizedBox(width: 6),
-                _buildHeaderIconButton(
-                  icon: Icons.flag_rounded,
-                  tooltip: 'Financial Goals',
-                  onTap: () => _openGoalsScreen(context),
-                  accentColor: AppTheme.primaryLight,
-                ),
-                const SizedBox(width: 6),
-                _buildHeaderIconButton(
-                  icon: Icons.auto_graph_rounded,
-                  tooltip: 'Forecasts & Trends',
-                  onTap: () => _openForecastsScreen(context),
-                ),
-                const SizedBox(width: 6),
-                _buildHeaderIconButton(
-                  icon: Icons.tune_rounded,
-                  tooltip: 'What-If Simulator',
-                  onTap: () => _openSimulationsScreen(context),
-                ),
-                const SizedBox(width: 6),
-                _buildHeaderIconButton(
-                  icon: widget.businessController.isDemoMode
-                      ? Icons.exit_to_app_rounded
-                      : Icons.logout_rounded,
-                  tooltip: widget.businessController.isDemoMode ? 'Exit Demo' : 'Log Out',
-                  accentColor: widget.businessController.isDemoMode
-                      ? AppTheme.warningColor
-                      : Colors.white70,
-                  onTap: widget.businessController.isDemoMode
-                      ? widget.businessController.exitDemoMode
-                      : _handleSignOut,
+
+                // Action Pills Row: Growth | Flow | Goals | Filters
+                Row(
+                  children: [
+                    _buildActionPill(
+                      icon: Icons.trending_up_rounded,
+                      iconColor: const Color(0xFF34D399),
+                      label: 'Growth',
+                      onTap: () => _openAnalyticsScreen(context),
+                    ),
+                    const SizedBox(width: 7),
+                    _buildActionPill(
+                      icon: Icons.swap_vert_rounded,
+                      iconColor: const Color(0xFF38BDF8),
+                      label: 'Flow',
+                      onTap: () => _openForecastsScreen(context),
+                    ),
+                    const SizedBox(width: 7),
+                    _buildActionPill(
+                      icon: Icons.flag_rounded,
+                      iconColor: const Color(0xFFFBBF24),
+                      label: 'Goals',
+                      onTap: () => _openGoalsScreen(context),
+                    ),
+                    const SizedBox(width: 7),
+                    _buildActionPill(
+                      icon: Icons.tune_rounded,
+                      iconColor: Colors.white,
+                      label: 'Filters',
+                      onTap: () => _openSimulationsScreen(context),
+                    ),
+                  ],
                 ),
               ],
             ),
@@ -627,35 +651,179 @@ class _AuthenticatedAppShellState extends State<AuthenticatedAppShell> {
     );
   }
 
-  Widget _buildHeaderIconButton({
+  Widget _buildActionPill({
     required IconData icon,
-    required String tooltip,
+    required Color iconColor,
+    required String label,
     required VoidCallback onTap,
-    Color? accentColor,
   }) {
-    return Tooltip(
-      message: tooltip,
+    return Expanded(
       child: Material(
         color: Colors.transparent,
         child: InkWell(
           onTap: onTap,
-          borderRadius: BorderRadius.circular(10),
+          borderRadius: BorderRadius.circular(14),
           child: Container(
-            width: 34,
-            height: 34,
+            padding: const EdgeInsets.symmetric(vertical: 8),
             decoration: BoxDecoration(
-              color: Colors.white.withValues(alpha: 0.08),
-              borderRadius: BorderRadius.circular(10),
-              border: Border.all(color: Colors.white.withValues(alpha: 0.12)),
+              color: Colors.white.withValues(alpha: 0.15),
+              borderRadius: BorderRadius.circular(14),
+              border: Border.all(
+                color: Colors.white.withValues(alpha: 0.18),
+                width: 1,
+              ),
             ),
-            child: Icon(
-              icon,
-              size: 17,
-              color: accentColor ?? Colors.white.withValues(alpha: 0.85),
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                Icon(icon, size: 16, color: iconColor),
+                const SizedBox(width: 5),
+                Flexible(
+                  child: Text(
+                    label,
+                    style: const TextStyle(
+                      color: Colors.white,
+                      fontSize: 13,
+                      fontWeight: FontWeight.w600,
+                      letterSpacing: -0.1,
+                    ),
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                  ),
+                ),
+              ],
             ),
           ),
         ),
       ),
+    );
+  }
+
+  void _showBusinessHubSheet(BuildContext context, Business business) {
+    showModalBottomSheet(
+      context: context,
+      backgroundColor: Colors.white,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
+      ),
+      builder: (sheetContext) {
+        return SafeArea(
+          child: Padding(
+            padding: const EdgeInsets.fromLTRB(20, 16, 20, 24),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Center(
+                  child: Container(
+                    width: 36,
+                    height: 4,
+                    decoration: BoxDecoration(
+                      color: Colors.grey.shade300,
+                      borderRadius: BorderRadius.circular(2),
+                    ),
+                  ),
+                ),
+                const SizedBox(height: 16),
+                Row(
+                  children: [
+                    Container(
+                      width: 44,
+                      height: 44,
+                      decoration: BoxDecoration(
+                        gradient: AppTheme.primaryGradient,
+                        borderRadius: BorderRadius.circular(14),
+                      ),
+                      child: const Icon(
+                        Icons.auto_awesome_rounded,
+                        color: Colors.white,
+                        size: 22,
+                      ),
+                    ),
+                    const SizedBox(width: 12),
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            business.name,
+                            style: const TextStyle(
+                              fontSize: 17,
+                              fontWeight: FontWeight.w800,
+                              color: AppTheme.textPrimary,
+                            ),
+                          ),
+                          Text(
+                            '${business.currency} • ${business.industry ?? "General"}',
+                            style: const TextStyle(
+                              fontSize: 12,
+                              color: AppTheme.textSecondary,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 18),
+                const Divider(),
+                const SizedBox(height: 6),
+                ListTile(
+                  leading: Container(
+                    padding: const EdgeInsets.all(8),
+                    decoration: BoxDecoration(
+                      color: AppTheme.cyberIndigo.withValues(alpha: 0.12),
+                      borderRadius: BorderRadius.circular(10),
+                    ),
+                    child: const Icon(Icons.checklist_rtl_rounded, color: AppTheme.cyberIndigo, size: 20),
+                  ),
+                  title: const Text('CFO Action Plan', style: TextStyle(fontWeight: FontWeight.w700, fontSize: 14)),
+                  subtitle: const Text('30 & 90 day strategic roadmap', style: TextStyle(fontSize: 12, color: AppTheme.textSecondary)),
+                  trailing: const Icon(Icons.chevron_right_rounded, color: AppTheme.textMuted),
+                  onTap: () {
+                    Navigator.pop(sheetContext);
+                    _openActionPlanScreen(context);
+                  },
+                ),
+                ListTile(
+                  leading: Container(
+                    padding: const EdgeInsets.all(8),
+                    decoration: BoxDecoration(
+                      color: AppTheme.primaryColor.withValues(alpha: 0.12),
+                      borderRadius: BorderRadius.circular(10),
+                    ),
+                    child: const Icon(Icons.tune_rounded, color: AppTheme.primaryColor, size: 20),
+                  ),
+                  title: const Text('What-If Scenario Simulator', style: TextStyle(fontWeight: FontWeight.w700, fontSize: 14)),
+                  subtitle: const Text('Stress-test revenue and expenses', style: TextStyle(fontSize: 12, color: AppTheme.textSecondary)),
+                  trailing: const Icon(Icons.chevron_right_rounded, color: AppTheme.textMuted),
+                  onTap: () {
+                    Navigator.pop(sheetContext);
+                    _openSimulationsScreen(context);
+                  },
+                ),
+                ListTile(
+                  leading: Container(
+                    padding: const EdgeInsets.all(8),
+                    decoration: BoxDecoration(
+                      color: AppTheme.accentColor.withValues(alpha: 0.12),
+                      borderRadius: BorderRadius.circular(10),
+                    ),
+                    child: const Icon(Icons.insights_rounded, color: AppTheme.accentColor, size: 20),
+                  ),
+                  title: const Text('Advanced Business Intelligence', style: TextStyle(fontWeight: FontWeight.w700, fontSize: 14)),
+                  subtitle: const Text('Deep dive into margins, OPEX, and cash flows', style: TextStyle(fontSize: 12, color: AppTheme.textSecondary)),
+                  trailing: const Icon(Icons.chevron_right_rounded, color: AppTheme.textMuted),
+                  onTap: () {
+                    Navigator.pop(sheetContext);
+                    _openAnalyticsScreen(context);
+                  },
+                ),
+              ],
+            ),
+          ),
+        );
+      },
     );
   }
 
