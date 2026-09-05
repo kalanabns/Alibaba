@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import '../../../core/theme/app_theme.dart';
+import '../../../core/utilities/money_formatter.dart';
 import '../../businesses/domain/business.dart';
 import '../../financial_health/domain/financial_metric.dart';
 import '../../transactions/application/transaction_controller.dart';
@@ -93,7 +94,7 @@ class _SimulationsScreenState extends State<SimulationsScreen> {
         widget.currentMetric ??
         FinancialMetric(
           id: 'placeholder',
-          businessId: 'placeholder',
+          businessId: widget.business.id,
           periodStart: now.subtract(const Duration(days: 30)),
           periodEnd: now,
           revenue: 10000.0,
@@ -113,6 +114,7 @@ class _SimulationsScreenState extends State<SimulationsScreen> {
     _controller.runSimulation(
       baselineMetric: metric,
       transactions: widget.transactionsController.transactions,
+      currency: widget.business.currency,
     );
   }
 
@@ -324,7 +326,7 @@ class _SimulationsScreenState extends State<SimulationsScreen> {
                 ),
                 child: Text(
                   _controller.selectedType == ScenarioType.headcountAddition
-                      ? '\$${_controller.fixedAmountDelta.toStringAsFixed(0)} / mo'
+                      ? '${MoneyFormatter.format(_controller.fixedAmountDelta, currency: widget.business.currency, decimals: 0)} / mo'
                       : '${_controller.percentageDelta >= 0 ? '+' : ''}${_controller.percentageDelta.toStringAsFixed(1)}%',
                   style: const TextStyle(
                     fontSize: 13,
@@ -374,7 +376,11 @@ class _SimulationsScreenState extends State<SimulationsScreen> {
                   style: TextStyle(color: AppTheme.textSecondary, fontSize: 13),
                 ),
                 Text(
-                  '\$${_controller.fixedAmountDelta.toStringAsFixed(0)}',
+                  MoneyFormatter.format(
+                    _controller.fixedAmountDelta,
+                    currency: widget.business.currency,
+                    decimals: 0,
+                  ),
                   style: const TextStyle(fontWeight: FontWeight.w700),
                 ),
               ],
@@ -386,7 +392,11 @@ class _SimulationsScreenState extends State<SimulationsScreen> {
               divisions: 38,
               activeColor: AppTheme.navyPrimary,
               inactiveColor: Colors.grey.shade200,
-              label: '\$${_controller.fixedAmountDelta.toStringAsFixed(0)}',
+              label: MoneyFormatter.format(
+                _controller.fixedAmountDelta,
+                currency: widget.business.currency,
+                decimals: 0,
+              ),
               onChanged: (val) {
                 _controller.setFixedAmountDelta(val);
                 _runCurrentSimulation();
@@ -443,6 +453,7 @@ class _SimulationsScreenState extends State<SimulationsScreen> {
               projectedValue: result.projectedRevenue,
               deltaValue: result.revenueDelta,
               isCurrency: true,
+              currency: widget.business.currency,
               higherIsBetter: true,
               icon: Icons.trending_up_rounded,
             ),
@@ -452,6 +463,7 @@ class _SimulationsScreenState extends State<SimulationsScreen> {
               projectedValue: result.projectedExpenses,
               deltaValue: result.expensesDelta,
               isCurrency: true,
+              currency: widget.business.currency,
               higherIsBetter: false,
               icon: Icons.trending_down_rounded,
             ),
@@ -461,6 +473,7 @@ class _SimulationsScreenState extends State<SimulationsScreen> {
               projectedValue: result.projectedProfit,
               deltaValue: result.profitDelta,
               isCurrency: true,
+              currency: widget.business.currency,
               higherIsBetter: true,
               icon: Icons.account_balance_wallet_rounded,
             ),
@@ -470,6 +483,7 @@ class _SimulationsScreenState extends State<SimulationsScreen> {
               projectedValue: result.projectedMargin,
               deltaValue: result.marginDelta,
               isCurrency: false,
+              currency: widget.business.currency,
               isPercentage: true,
               higherIsBetter: true,
               icon: Icons.pie_chart_outline_rounded,
@@ -480,6 +494,7 @@ class _SimulationsScreenState extends State<SimulationsScreen> {
               projectedValue: result.projectedCashFlow,
               deltaValue: result.cashFlowDelta,
               isCurrency: true,
+              currency: widget.business.currency,
               higherIsBetter: true,
               icon: Icons.swap_horiz_rounded,
             ),
@@ -489,6 +504,7 @@ class _SimulationsScreenState extends State<SimulationsScreen> {
               projectedValue: result.projectedHealthScore,
               deltaValue: result.healthScoreDelta,
               isCurrency: false,
+              currency: widget.business.currency,
               higherIsBetter: true,
               icon: Icons.favorite_rounded,
             ),
@@ -659,6 +675,7 @@ class _SimulationsScreenState extends State<SimulationsScreen> {
                       businessId: widget.business.id,
                       businessName: businessName,
                       industry: industry,
+                      currency: widget.business.currency,
                     );
                   },
                 ),
@@ -850,7 +867,7 @@ class _SimulationsScreenState extends State<SimulationsScreen> {
                           ),
                         ),
                         subtitle: Text(
-                          'Profit Delta: ${profitDelta >= 0 ? '+' : ''}\$${profitDelta.toStringAsFixed(0)} • ${item.createdAt.month}/${item.createdAt.day}',
+                          'Profit Delta: ${MoneyFormatter.format(profitDelta, currency: widget.business.currency, showSign: true, decimals: 0)} • ${item.createdAt.month}/${item.createdAt.day}',
                           style: const TextStyle(
                             fontSize: 12,
                             color: AppTheme.textSecondary,

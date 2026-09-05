@@ -1,3 +1,5 @@
+import 'dart:convert';
+import 'package:file_picker/file_picker.dart';
 import 'package:flutter/material.dart';
 import '../../../core/theme/app_theme.dart';
 import '../../../core/utilities/money_formatter.dart';
@@ -34,24 +36,10 @@ class _CsvImportFlowState extends State<CsvImportFlow> {
   CsvParseResult? _parseResult;
 
   bool _isImporting = false;
+  bool _isReadingFile = false;
+  String? _selectedFileName;
   String? _errorMessage;
   int _importedCount = 0;
-
-  static const String _demoCsvData =
-      '''Date,Description,Category,Amount,Reference
-2026-08-01,Enterprise Client Retainer,Sales Revenue,14500.00,INV-8801
-2026-08-03,Office Space Lease,Rent,-3200.00,RENT-AUG
-2026-08-05,Product Engineering Payroll,Payroll,-12800.00,PAY-260805
-2026-08-08,SaaS Platform Subscriptions,Software,-650.00,SUB-2026
-2026-08-10,Direct Service Consulting,Service Revenue,8900.00,INV-8802
-2026-08-12,Electricity & Fiber Internet,Utilities,-420.00,UTIL-AUG
-2026-08-15,Digital Marketing Campaign,Marketing,-1850.00,MKT-0815
-2026-08-18,Wholesale Inventory Supplies,Inventory,-4500.00,PO-9912
-2026-08-20,Quarterly Business Insurance,Insurance,-850.00,INS-Q3
-2026-08-22,Client Milestone Delivery,Sales Revenue,16800.00,INV-8803
-2026-08-25,Equipment Maintenance & Office,Supplies,-380.00,SUP-884
-2026-08-28,Legal & Accounting Advisory,Professional Services,-1200.00,ADV-AUG
-2026-08-30,E-commerce Sales Payout,Sales Revenue,11250.00,PAYOUT-889''';
 
   @override
   void dispose() {
@@ -59,17 +47,68 @@ class _CsvImportFlowState extends State<CsvImportFlow> {
     super.dispose();
   }
 
-  void _loadDemoData() {
-    setState(() {
-      _csvTextController.text = _demoCsvData;
-    });
+  Future<void> _pickCsvFileFromDevice() async {
+    try {
+      setState(() {
+        _isReadingFile = true;
+        _errorMessage = null;
+      });
+
+      final pickedFile = await FilePicker.pickFile(
+        type: FileType.custom,
+        allowedExtensions: ['csv', 'txt'],
+      );
+
+      if (pickedFile == null) {
+        setState(() {
+          _isReadingFile = false;
+        });
+        return;
+      }
+
+      final bytes = await pickedFile.readAsBytes();
+      String content = utf8.decode(bytes, allowMalformed: true);
+
+      if (content.trim().isNotEmpty) {
+        // Strip BOM (Byte Order Mark) if present (common in spreadsheet exports)
+        if (content.startsWith('\uFEFF')) {
+          content = content.substring(1);
+        }
+
+        setState(() {
+          _csvTextController.text = content;
+          _selectedFileName = pickedFile.name;
+          _isReadingFile = false;
+          _errorMessage = null;
+        });
+
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text('Loaded ${pickedFile.name}'),
+              duration: const Duration(seconds: 2),
+            ),
+          );
+        }
+      } else {
+        setState(() {
+          _isReadingFile = false;
+          _errorMessage = 'The selected file is empty.';
+        });
+      }
+    } catch (e) {
+      setState(() {
+        _isReadingFile = false;
+        _errorMessage = 'Failed to read file: $e';
+      });
+    }
   }
 
   void _processCsvText() {
     final text = _csvTextController.text.trim();
     if (text.isEmpty) {
       setState(() {
-        _errorMessage = 'Please paste CSV content or load sample data.';
+        _errorMessage = 'Please select a CSV file or paste CSV content.';
       });
       return;
     }
@@ -164,20 +203,20 @@ class _CsvImportFlowState extends State<CsvImportFlow> {
   @override
   Widget build(BuildContext context) {
     return Dialog(
-      insetPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 20),
+      insetPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 16),
       child: Container(
         constraints: const BoxConstraints(maxWidth: 680, maxHeight: 720),
-        padding: const EdgeInsets.all(24),
+        padding: const EdgeInsets.all(16),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
             // Stepper Header
             _buildStepperHeader(),
-            const Divider(height: 24),
+            const Divider(height: 20),
             if (_errorMessage != null) ...[
               Container(
                 padding: const EdgeInsets.all(12),
-                margin: const EdgeInsets.only(bottom: 16),
+                margin: const EdgeInsets.only(bottom: 12),
                 decoration: BoxDecoration(
                   color: AppTheme.errorColor.withValues(alpha: 0.15),
                   borderRadius: BorderRadius.circular(10),
@@ -190,7 +229,7 @@ class _CsvImportFlowState extends State<CsvImportFlow> {
                     const Icon(
                       Icons.error_outline,
                       color: AppTheme.errorColor,
-                      size: 20,
+                      size: 18,
                     ),
                     const SizedBox(width: 8),
                     Expanded(
@@ -198,7 +237,7 @@ class _CsvImportFlowState extends State<CsvImportFlow> {
                         _errorMessage!,
                         style: const TextStyle(
                           color: AppTheme.errorColor,
-                          fontSize: 13,
+                          fontSize: 12,
                         ),
                       ),
                     ),
@@ -215,77 +254,87 @@ class _CsvImportFlowState extends State<CsvImportFlow> {
   }
 
   Widget _buildStepperHeader() {
-    final stepTitles = ['Select Data', 'Map Columns', 'Validate', 'Complete'];
+    final stepTitles = ['Select', 'Map', 'Validate', 'Done'];
 
     return Row(
-      mainAxisAlignment: MainAxisAlignment.spaceBetween,
       children: [
-        Row(
-          children: List.generate(stepTitles.length, (index) {
-            final isDone = _currentStep > index;
-            final isCurrent = _currentStep == index;
-            final color = isDone || isCurrent
-                ? AppTheme.primaryColor
-                : AppTheme.textMuted;
+        Expanded(
+          child: SingleChildScrollView(
+            scrollDirection: Axis.horizontal,
+            child: Row(
+              mainAxisSize: MainAxisSize.min,
+              children: List.generate(stepTitles.length, (index) {
+                final isDone = _currentStep > index;
+                final isCurrent = _currentStep == index;
+                final color = isDone || isCurrent
+                    ? AppTheme.primaryColor
+                    : AppTheme.textMuted;
 
-            return Row(
-              children: [
-                Container(
-                  width: 26,
-                  height: 26,
-                  decoration: BoxDecoration(
-                    color: isDone
-                        ? AppTheme.primaryColor
-                        : (isCurrent
-                              ? AppTheme.primaryColor.withValues(alpha: 0.2)
-                              : AppTheme.surfaceElevated),
-                    shape: BoxShape.circle,
-                    border: Border.all(color: color),
-                  ),
-                  child: Center(
-                    child: isDone
-                        ? const Icon(
-                            Icons.check,
-                            size: 14,
-                            color: Color(0xFF042F2E),
-                          )
-                        : Text(
-                            '${index + 1}',
-                            style: TextStyle(
-                              color: isCurrent
-                                  ? AppTheme.primaryLight
-                                  : AppTheme.textMuted,
-                              fontSize: 12,
-                              fontWeight: FontWeight.bold,
-                            ),
-                          ),
-                  ),
-                ),
-                const SizedBox(width: 6),
-                Text(
-                  stepTitles[index],
-                  style: TextStyle(
-                    color: isCurrent
-                        ? AppTheme.textPrimary
-                        : AppTheme.textMuted,
-                    fontSize: 12,
-                    fontWeight: isCurrent ? FontWeight.bold : FontWeight.normal,
-                  ),
-                ),
-                if (index < stepTitles.length - 1) ...[
-                  Container(
-                    width: 20,
-                    height: 1,
-                    margin: const EdgeInsets.symmetric(horizontal: 8),
-                    color: AppTheme.borderColor,
-                  ),
-                ],
-              ],
-            );
-          }),
+                return Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Container(
+                      width: 22,
+                      height: 22,
+                      decoration: BoxDecoration(
+                        color: isDone
+                            ? AppTheme.primaryColor
+                            : (isCurrent
+                                ? AppTheme.primaryColor.withValues(alpha: 0.2)
+                                : AppTheme.surfaceElevated),
+                        shape: BoxShape.circle,
+                        border: Border.all(color: color),
+                      ),
+                      child: Center(
+                        child: isDone
+                            ? const Icon(
+                                Icons.check,
+                                size: 12,
+                                color: Color(0xFF042F2E),
+                              )
+                            : Text(
+                                '${index + 1}',
+                                style: TextStyle(
+                                  color: isCurrent
+                                      ? AppTheme.primaryLight
+                                      : AppTheme.textMuted,
+                                  fontSize: 11,
+                                  fontWeight: FontWeight.bold,
+                                ),
+                              ),
+                      ),
+                    ),
+                    const SizedBox(width: 4),
+                    Text(
+                      stepTitles[index],
+                      style: TextStyle(
+                        color: isCurrent
+                            ? AppTheme.textPrimary
+                            : AppTheme.textMuted,
+                        fontSize: 12,
+                        fontWeight:
+                            isCurrent ? FontWeight.bold : FontWeight.normal,
+                      ),
+                    ),
+                    if (index < stepTitles.length - 1) ...[
+                      Container(
+                        width: 10,
+                        height: 1,
+                        margin: const EdgeInsets.symmetric(horizontal: 5),
+                        color: AppTheme.borderColor,
+                      ),
+                    ],
+                  ],
+                );
+              }),
+            ),
+          ),
         ),
+        const SizedBox(width: 6),
         IconButton(
-          icon: const Icon(Icons.close, color: AppTheme.textSecondary),
+          icon: const Icon(Icons.close, color: AppTheme.textSecondary, size: 20),
+          padding: EdgeInsets.zero,
+          constraints: const BoxConstraints(),
           onPressed: () => Navigator.of(context).pop(_currentStep == 3),
         ),
       ],
@@ -307,7 +356,7 @@ class _CsvImportFlowState extends State<CsvImportFlow> {
     }
   }
 
-  // STEP 1: Paste or Load CSV
+  // STEP 1: Select CSV from Device or Paste
   Widget _buildStep1SelectData() {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -315,17 +364,119 @@ class _CsvImportFlowState extends State<CsvImportFlow> {
         const Text(
           'Import Bank or Accounting CSV',
           style: TextStyle(
-            fontSize: 18,
+            fontSize: 17,
             fontWeight: FontWeight.bold,
             color: AppTheme.textPrimary,
           ),
         ),
-        const SizedBox(height: 6),
+        const SizedBox(height: 4),
         const Text(
-          'Paste your CSV export or test with Finora realistic sample transactions.',
-          style: TextStyle(fontSize: 13, color: AppTheme.textSecondary),
+          'Upload a CSV file directly from your device or paste raw CSV text.',
+          style: TextStyle(fontSize: 12, color: AppTheme.textSecondary),
         ),
-        const SizedBox(height: 16),
+        const SizedBox(height: 12),
+        // Native device file picker card
+        InkWell(
+          onTap: _isReadingFile ? null : _pickCsvFileFromDevice,
+          borderRadius: BorderRadius.circular(12),
+          child: Container(
+            padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 14),
+            decoration: BoxDecoration(
+              color: AppTheme.primaryColor.withValues(alpha: 0.1),
+              borderRadius: BorderRadius.circular(12),
+              border: Border.all(
+                color: _selectedFileName != null
+                    ? AppTheme.accentColor
+                    : AppTheme.primaryColor.withValues(alpha: 0.35),
+              ),
+            ),
+            child: Row(
+              children: [
+                Container(
+                  padding: const EdgeInsets.all(8),
+                  decoration: BoxDecoration(
+                    color: AppTheme.primaryColor.withValues(alpha: 0.2),
+                    shape: BoxShape.circle,
+                  ),
+                  child: _isReadingFile
+                      ? const SizedBox(
+                          width: 20,
+                          height: 20,
+                          child: CircularProgressIndicator(strokeWidth: 2),
+                        )
+                      : Icon(
+                          _selectedFileName != null
+                              ? Icons.description_outlined
+                              : Icons.upload_file_rounded,
+                          color: _selectedFileName != null
+                              ? AppTheme.accentColor
+                              : AppTheme.primaryLight,
+                          size: 20,
+                        ),
+                ),
+                const SizedBox(width: 12),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        _selectedFileName ?? 'Choose CSV from Device',
+                        style: const TextStyle(
+                          fontSize: 13,
+                          fontWeight: FontWeight.w600,
+                          color: AppTheme.textPrimary,
+                        ),
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                      ),
+                      const SizedBox(height: 2),
+                      Text(
+                        _selectedFileName != null
+                            ? 'File loaded • Tap to change file'
+                            : 'Tap to browse .csv or .txt files',
+                        style: TextStyle(
+                          fontSize: 11,
+                          color: _selectedFileName != null
+                              ? AppTheme.accentColor
+                              : AppTheme.textMuted,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+                Icon(
+                  _selectedFileName != null
+                      ? Icons.check_circle
+                      : Icons.arrow_forward_ios_rounded,
+                  color: _selectedFileName != null
+                      ? AppTheme.accentColor
+                      : AppTheme.textMuted,
+                  size: 16,
+                ),
+              ],
+            ),
+          ),
+        ),
+        const SizedBox(height: 10),
+        Row(
+          children: const [
+            Expanded(child: Divider()),
+            Padding(
+              padding: EdgeInsets.symmetric(horizontal: 8),
+              child: Text(
+                'OR PASTE CSV TEXT',
+                style: TextStyle(
+                  fontSize: 10,
+                  fontWeight: FontWeight.w600,
+                  color: AppTheme.textMuted,
+                  letterSpacing: 0.8,
+                ),
+              ),
+            ),
+            Expanded(child: Divider()),
+          ],
+        ),
+        const SizedBox(height: 10),
         Expanded(
           child: Container(
             decoration: BoxDecoration(
@@ -352,23 +503,31 @@ class _CsvImportFlowState extends State<CsvImportFlow> {
             ),
           ),
         ),
-        const SizedBox(height: 16),
+        const SizedBox(height: 14),
         Row(
           children: [
-            OutlinedButton.icon(
-              onPressed: _loadDemoData,
-              icon: const Icon(
-                Icons.auto_fix_high,
-                size: 18,
-                color: AppTheme.primaryLight,
+            Expanded(
+              child: OutlinedButton.icon(
+                onPressed: _isReadingFile ? null : _pickCsvFileFromDevice,
+                icon: const Icon(Icons.folder_open, size: 18),
+                label: const Text(
+                  'Browse File',
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                ),
               ),
-              label: const Text('Load Demo CSV Sample'),
             ),
-            const Spacer(),
-            ElevatedButton.icon(
-              onPressed: _processCsvText,
-              icon: const Icon(Icons.arrow_forward, size: 18),
-              label: const Text('Continue to Mapping'),
+            const SizedBox(width: 10),
+            Expanded(
+              child: ElevatedButton.icon(
+                onPressed: _processCsvText,
+                icon: const Icon(Icons.arrow_forward, size: 18),
+                label: const Text(
+                  'Continue',
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                ),
+              ),
             ),
           ],
         ),
@@ -567,18 +726,28 @@ class _CsvImportFlowState extends State<CsvImportFlow> {
               ),
             ),
           ),
-          const SizedBox(height: 20),
+          const SizedBox(height: 18),
           Row(
             children: [
-              OutlinedButton(
-                onPressed: () => setState(() => _currentStep = 0),
-                child: const Text('Back'),
+              Expanded(
+                flex: 1,
+                child: OutlinedButton(
+                  onPressed: () => setState(() => _currentStep = 0),
+                  child: const Text('Back', maxLines: 1),
+                ),
               ),
-              const Spacer(),
-              ElevatedButton.icon(
-                onPressed: _runValidation,
-                icon: const Icon(Icons.check_circle_outline, size: 18),
-                label: const Text('Validate & Preview'),
+              const SizedBox(width: 10),
+              Expanded(
+                flex: 2,
+                child: ElevatedButton.icon(
+                  onPressed: _runValidation,
+                  icon: const Icon(Icons.check_circle_outline, size: 18),
+                  label: const Text(
+                    'Validate & Preview',
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                  ),
+                ),
               ),
             ],
           ),
@@ -870,31 +1039,39 @@ class _CsvImportFlowState extends State<CsvImportFlow> {
             ),
           ),
         ),
-        const SizedBox(height: 16),
+        const SizedBox(height: 14),
         Row(
           children: [
-            OutlinedButton(
-              onPressed: _isImporting
-                  ? null
-                  : () => setState(() => _currentStep = 1),
-              child: const Text('Back to Mapping'),
+            Expanded(
+              flex: 1,
+              child: OutlinedButton(
+                onPressed: _isImporting
+                    ? null
+                    : () => setState(() => _currentStep = 1),
+                child: const Text('Back', maxLines: 1),
+              ),
             ),
-            const Spacer(),
-            ElevatedButton.icon(
-              onPressed: (_isImporting || res.validCount == 0)
-                  ? null
-                  : _executeImport,
-              icon: _isImporting
-                  ? const SizedBox(
-                      width: 16,
-                      height: 16,
-                      child: CircularProgressIndicator(strokeWidth: 2),
-                    )
-                  : const Icon(Icons.cloud_upload_outlined, size: 18),
-              label: Text(
-                _isImporting
-                    ? 'Importing...'
-                    : 'Import ${res.validCount} Transactions',
+            const SizedBox(width: 10),
+            Expanded(
+              flex: 2,
+              child: ElevatedButton.icon(
+                onPressed: (_isImporting || res.validCount == 0)
+                    ? null
+                    : _executeImport,
+                icon: _isImporting
+                    ? const SizedBox(
+                        width: 16,
+                        height: 16,
+                        child: CircularProgressIndicator(strokeWidth: 2),
+                      )
+                    : const Icon(Icons.cloud_upload_outlined, size: 18),
+                label: Text(
+                  _isImporting
+                      ? 'Importing...'
+                      : 'Import (${res.validCount})',
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                ),
               ),
             ),
           ],
@@ -910,7 +1087,7 @@ class _CsvImportFlowState extends State<CsvImportFlow> {
     required IconData icon,
   }) {
     return Container(
-      padding: const EdgeInsets.all(12),
+      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 10),
       decoration: BoxDecoration(
         color: AppTheme.surfaceElevated,
         borderRadius: BorderRadius.circular(10),
@@ -922,12 +1099,16 @@ class _CsvImportFlowState extends State<CsvImportFlow> {
           Row(
             children: [
               Icon(icon, size: 14, color: color),
-              const SizedBox(width: 6),
-              Text(
-                title,
-                style: const TextStyle(
-                  color: AppTheme.textSecondary,
-                  fontSize: 11,
+              const SizedBox(width: 4),
+              Expanded(
+                child: Text(
+                  title,
+                  style: const TextStyle(
+                    color: AppTheme.textSecondary,
+                    fontSize: 11,
+                  ),
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
                 ),
               ),
             ],
