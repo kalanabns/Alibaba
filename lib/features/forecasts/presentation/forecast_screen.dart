@@ -55,6 +55,7 @@ class ForecastScreen extends StatelessWidget {
                     businessId: business.id,
                     buckets: historicalBuckets,
                     startingCash: business.startingCash,
+                    currency: business.currency,
                   ),
                 ),
               ),
@@ -105,26 +106,25 @@ class ForecastScreen extends StatelessWidget {
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Row(
-                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                        crossAxisAlignment: CrossAxisAlignment.center,
                         children: [
-                          const Row(
-                            children: [
-                              Icon(
-                                Icons.auto_graph_rounded,
-                                color: AppTheme.primaryLight,
-                                size: 20,
-                              ),
-                              SizedBox(width: 8),
-                              Text(
-                                'Financial Outlook & Forecasting',
-                                style: TextStyle(
-                                  fontSize: 16,
-                                  fontWeight: FontWeight.bold,
-                                  color: Colors.white,
-                                ),
-                              ),
-                            ],
+                          const Icon(
+                            Icons.auto_graph_rounded,
+                            color: AppTheme.primaryLight,
+                            size: 20,
                           ),
+                          const SizedBox(width: 8),
+                          const Expanded(
+                            child: Text(
+                              'Financial Outlook & Forecasting',
+                              style: TextStyle(
+                                fontSize: 16,
+                                fontWeight: FontWeight.bold,
+                                color: Colors.white,
+                              ),
+                            ),
+                          ),
+                          const SizedBox(width: 8),
                           Container(
                             padding: const EdgeInsets.symmetric(
                               horizontal: 10,
@@ -316,20 +316,23 @@ class ForecastScreen extends StatelessWidget {
             ],
           ),
           const SizedBox(height: 8),
-          Text(
-            MoneyFormatter.format(
-              value,
-              currency: currency,
-              compact: value.abs() >= 100000,
+          FittedBox(
+            fit: BoxFit.scaleDown,
+            alignment: Alignment.centerLeft,
+            child: Text(
+              MoneyFormatter.format(
+                value,
+                currency: currency,
+                compact: value.abs() >= 100000,
+              ),
+              style: const TextStyle(
+                fontSize: 18,
+                fontWeight: FontWeight.bold,
+                color: AppTheme.textPrimary,
+                letterSpacing: -0.2,
+              ),
+              maxLines: 1,
             ),
-            style: const TextStyle(
-              fontSize: 18,
-              fontWeight: FontWeight.bold,
-              color: AppTheme.textPrimary,
-              letterSpacing: -0.2,
-            ),
-            maxLines: 1,
-            overflow: TextOverflow.ellipsis,
           ),
           const SizedBox(height: 4),
           Text(

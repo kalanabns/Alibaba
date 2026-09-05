@@ -82,6 +82,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
         businessId: widget.business.id,
         buckets: widget.healthController.monthlyBuckets,
         startingCash: widget.business.startingCash,
+        currency: widget.business.currency,
         silent: true,
       );
     }

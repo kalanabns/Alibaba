@@ -1,4 +1,5 @@
 import 'dart:math' as math;
+import '../../../core/utilities/money_formatter.dart';
 import '../../alerts/domain/alert.dart';
 import '../../financial_health/domain/financial_engine.dart';
 import 'forecast.dart';
@@ -53,6 +54,7 @@ class ForecastEngine {
     required List<MonthlyFinancialBucket> historicalBuckets,
     double startingCash = 0.0,
     int forecastHorizonMonths = 3,
+    String currency = 'USD',
   }) {
     // 1. Data Sufficiency Check
     // Filter out buckets with zero activity if leading
@@ -206,6 +208,18 @@ class ForecastEngine {
         nextMonthCashFlow;
 
     if (nextMonthCashFlow < 0) {
+      final formattedCashFlow = MoneyFormatter.format(
+        nextMonthCashFlow,
+        currency: currency,
+      );
+      final formattedExpenses = MoneyFormatter.format(
+        nextMonthExpenses,
+        currency: currency,
+      );
+      final formattedRevenue = MoneyFormatter.format(
+        nextMonthRevenue,
+        currency: currency,
+      );
       forecastRisks.add(
         Alert(
           id: 'risk_forecast_cash_burn_$businessId',
@@ -216,7 +230,7 @@ class ForecastEngine {
               : AlertSeverity.high,
           title: 'Projected Operating Cash Deficit',
           description:
-              'Forward-looking trend models project net cash flow of -\$${(-nextMonthCashFlow).toStringAsFixed(2)} next month (projected outflow \$${nextMonthExpenses.toStringAsFixed(2)} vs revenue \$${nextMonthRevenue.toStringAsFixed(2)}).',
+              'Forward-looking trend models project net cash flow of $formattedCashFlow next month (projected outflow $formattedExpenses vs revenue $formattedRevenue).',
           recommendation:
               'Build up liquid cash reserves and review scheduled recurring vendor commitments ahead of the upcoming cycle.',
           metricName: 'forecast_cash_flow',
@@ -228,6 +242,10 @@ class ForecastEngine {
     }
 
     if (revProj.slope < -0.10 && revenueSeries.last > 0) {
+      final formattedRev = MoneyFormatter.format(
+        nextMonthRevenue,
+        currency: currency,
+      );
       forecastRisks.add(
         Alert(
           id: 'risk_forecast_revenue_decline_$businessId',
@@ -236,7 +254,7 @@ class ForecastEngine {
           severity: AlertSeverity.medium,
           title: 'Projected Revenue Contraction',
           description:
-              'Based on recent trajectory, top-line revenue is projected to contract to ~\$${nextMonthRevenue.toStringAsFixed(2)} next month.',
+              'Based on recent trajectory, top-line revenue is projected to contract to ~$formattedRev next month.',
           recommendation:
               'Implement customer retention incentives and initiate new pipeline outreach to stabilize sales volume.',
           metricName: 'forecast_revenue',

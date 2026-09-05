@@ -32,6 +32,7 @@ class ForecastController extends ChangeNotifier {
     required String businessId,
     required List<MonthlyFinancialBucket> buckets,
     double startingCash = 0.0,
+    String currency = 'USD',
     bool silent = false,
   }) async {
     if (!silent) {
@@ -45,6 +46,7 @@ class ForecastController extends ChangeNotifier {
         businessId: businessId,
         historicalBuckets: buckets,
         startingCash: startingCash,
+        currency: currency,
       );
 
       _evaluation = result;

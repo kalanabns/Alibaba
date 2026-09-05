@@ -260,5 +260,44 @@ void main() {
         expect(evalLong.confidenceScore, lessThanOrEqualTo(0.95));
       },
     );
+
+    test(
+      'formats forecast risk alert descriptions with provided business currency',
+      () {
+        final buckets = [
+          const MonthlyFinancialBucket(
+            year: 2025,
+            month: 10,
+            label: 'Oct 2025',
+            revenue: 8000.0,
+            expenses: 15000.0,
+            profit: -7000.0,
+            netCashFlow: -7000.0,
+          ),
+          const MonthlyFinancialBucket(
+            year: 2025,
+            month: 11,
+            label: 'Nov 2025',
+            revenue: 7000.0,
+            expenses: 16000.0,
+            profit: -9000.0,
+            netCashFlow: -9000.0,
+          ),
+        ];
+
+        final evalLkr = ForecastEngine.generateForecasts(
+          businessId: 'biz-lkr',
+          historicalBuckets: buckets,
+          currency: 'LKR',
+        );
+
+        expect(evalLkr.forecastRisks.isNotEmpty, true);
+        final cashDeficitRisk = evalLkr.forecastRisks.firstWhere(
+          (r) => r.id.contains('cash_burn'),
+        );
+        expect(cashDeficitRisk.description.contains('Rs. '), true);
+        expect(cashDeficitRisk.description.contains(r'$'), false);
+      },
+    );
   });
 }

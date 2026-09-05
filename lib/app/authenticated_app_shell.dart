@@ -113,6 +113,7 @@ class _AuthenticatedAppShellState extends State<AuthenticatedAppShell> {
       businessId: demo.business.id,
       buckets: demo.buckets,
       startingCash: demo.business.startingCash,
+      currency: demo.business.currency,
       silent: true,
     );
     _actionPlanController.generateRoadmap(
@@ -153,6 +154,7 @@ class _AuthenticatedAppShellState extends State<AuthenticatedAppShell> {
         businessId: business.id,
         buckets: _healthController.monthlyBuckets,
         startingCash: business.startingCash,
+        currency: business.currency,
         silent: silent,
       );
 

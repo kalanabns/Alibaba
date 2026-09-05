@@ -103,20 +103,24 @@ class ForecastChart extends StatelessWidget {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Text(
-                title,
-                style: const TextStyle(
-                  fontSize: 15,
-                  fontWeight: FontWeight.bold,
-                  color: AppTheme.textPrimary,
+              Expanded(
+                child: Text(
+                  title,
+                  style: const TextStyle(
+                    fontSize: 14,
+                    fontWeight: FontWeight.bold,
+                    color: AppTheme.textPrimary,
+                  ),
                 ),
               ),
+              const SizedBox(width: 8),
               Row(
+                mainAxisSize: MainAxisSize.min,
                 children: [
                   _buildLegendItem('Actual', accentColor, isDashed: false),
-                  const SizedBox(width: 12),
+                  const SizedBox(width: 10),
                   _buildLegendItem(
                     'Forecast',
                     accentColor.withValues(alpha: 0.6),
@@ -137,28 +141,33 @@ class ForecastChart extends StatelessWidget {
 
                 return Expanded(
                   child: Padding(
-                    padding: const EdgeInsets.symmetric(horizontal: 4.0),
+                    padding: const EdgeInsets.symmetric(horizontal: 2.0),
                     child: Column(
                       mainAxisAlignment: MainAxisAlignment.end,
                       children: [
                         // Tooltip or Value label
-                        Text(
-                          MoneyFormatter.format(
-                            point.value,
-                            currency: currency,
-                            compact: true,
+                        SizedBox(
+                          height: 14,
+                          child: FittedBox(
+                            fit: BoxFit.scaleDown,
+                            child: Text(
+                              MoneyFormatter.format(
+                                point.value,
+                                currency: currency,
+                                compact: true,
+                              ),
+                              style: TextStyle(
+                                fontSize: 9,
+                                fontWeight: isForecast
+                                    ? FontWeight.bold
+                                    : FontWeight.w500,
+                                color: isForecast
+                                    ? AppTheme.primaryNavy
+                                    : AppTheme.textSecondary,
+                              ),
+                              maxLines: 1,
+                            ),
                           ),
-                          style: TextStyle(
-                            fontSize: 9,
-                            fontWeight: isForecast
-                                ? FontWeight.bold
-                                : FontWeight.w500,
-                            color: isForecast
-                                ? AppTheme.primaryNavy
-                                : AppTheme.textSecondary,
-                          ),
-                          maxLines: 1,
-                          overflow: TextOverflow.ellipsis,
                         ),
                         const SizedBox(height: 4),
                         // Bar with distinction
